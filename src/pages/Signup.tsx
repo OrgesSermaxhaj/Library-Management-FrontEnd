@@ -111,7 +111,7 @@ const Signup = () => {
                   variant="link" 
                   className="p-0 text-library-primary"
                   type="button"
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/login")}
                 >
                   Sign in
                 </Button>

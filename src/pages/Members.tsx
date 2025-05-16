@@ -119,7 +119,7 @@ const Members = () => {
       <Sidebar />
       
       <div className="flex-1 overflow-y-auto p-8">
-        <Header title="Members" />
+        <Header />
         
         <div className="mb-6 flex justify-between">
           <div className="relative w-80">

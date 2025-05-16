@@ -118,7 +118,7 @@ const Books = () => {
       <Sidebar />
       
       <div className="flex-1 overflow-y-auto p-8">
-        <Header title="Books" />
+        <Header />
         
         <div className="mb-6 flex justify-between">
           <div className="relative w-80">

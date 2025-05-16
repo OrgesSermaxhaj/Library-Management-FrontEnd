@@ -7,7 +7,16 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 3000,
+    strictPort: true,
+    proxy: {
+      // optional: proxy all /api calls to your Spring Boot backend
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
   plugins: [
     react(),

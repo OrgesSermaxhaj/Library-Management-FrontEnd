@@ -1,30 +1,52 @@
 
-import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StatsCardProps {
-  icon: LucideIcon;
   title: string;
   value: string | number;
-  iconBgColor?: string;
-  iconColor?: string;
+  icon: LucideIcon;
+  trend?: {
+    value: number;
+    isPositive: boolean;
+  };
+  className?: string;
 }
 
 const StatsCard = ({ 
-  icon: Icon, 
   title, 
-  value,
-  iconBgColor = "bg-library-primary",
-  iconColor = "text-white"
+  value, 
+  icon: Icon,
+  trend,
+  className 
 }: StatsCardProps) => {
   return (
-    <div className="bg-white rounded-lg p-4 flex items-center gap-4 shadow-sm">
-      <div className={cn("rounded-full p-2", iconBgColor)}>
-        <Icon size={24} className={iconColor} />
-      </div>
-      <div>
-        <p className="text-sm text-gray-500">{title}</p>
-        <p className="text-2xl font-bold">{value}</p>
+    <div className={cn(
+      "bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm border border-gray-100 dark:border-gray-700",
+      className
+    )}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+          <h3 className="text-2xl font-bold mt-1 text-gray-900 dark:text-white">{value}</h3>
+          
+          {trend && (
+            <div className="flex items-center mt-1">
+              <span className={
+                trend.isPositive 
+                  ? "text-green-500 text-xs font-medium"
+                  : "text-red-500 text-xs font-medium"
+              }>
+                {trend.isPositive ? "+" : ""}{trend.value}%
+              </span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 ml-1">vs last week</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="rounded-full p-2 bg-primary/10 text-primary">
+          <Icon size={24} />
+        </div>
       </div>
     </div>
   );

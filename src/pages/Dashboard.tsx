@@ -1,106 +1,82 @@
 
-import { useState } from "react";
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
+import { Users, BookOpen, Clock, DollarSign } from "lucide-react";
+import AdminLayout from "@/components/layout/AdminLayout";
 import StatsCard from "@/components/dashboard/StatsCard";
-import BorrowChart from "@/components/dashboard/BorrowChart";
-import OverdueTable from "@/components/dashboard/OverdueTable";
-import MemberDetail from "@/components/dashboard/MemberDetail";
-import { BookOpen, Clock, Users, UserPlus } from "lucide-react";
+import BranchTable from "@/components/dashboard/BranchTable";
+import ServiceStatus from "@/components/dashboard/ServiceStatus";
+import VisitorsChart from "@/components/dashboard/VisitorsChart";
+import Announcements from "@/components/dashboard/Announcements";
+import QuickActions from "@/components/dashboard/QuickActions";
+import { useStats } from "@/hooks/useStats";
 
 const Dashboard = () => {
-  const [showMemberDetails, setShowMemberDetails] = useState(true);
-  
-  const memberData = {
-    name: "Eleanor Amarlis",
-    joinYear: 2020,
-    avatar: "https://github.com/shadcn.png",
-    books: [
-      {
-        id: "1",
-        title: "Sea of Tranquility: A Novel",
-        author: "Emily St. John Mandel",
-        borrowDate: "May 29, 2022",
-        returnDate: "Jun 15, 2022",
-        isOverdue: true,
-        daysOverdue: 2,
-        coverImage: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=1887&auto=format&fit=crop",
-      },
-      {
-        id: "2",
-        title: "Ender's Game",
-        author: "Orson Scott Card",
-        borrowDate: "May 29, 2022",
-        returnDate: "Jun 15, 2022",
-        isOverdue: true,
-        daysOverdue: 2,
-        coverImage: "https://images.unsplash.com/photo-1621351183012-e2f9972dd9bf?q=80&w=1935&auto=format&fit=crop",
-      }
-    ]
-  };
+  const { stats, isLoading } = useStats();
   
   return (
-    <div className="flex h-screen overflow-hidden bg-library-background">
-      <Sidebar />
-      
-      <div className="flex flex-1 overflow-hidden">
-        <div className={`flex-1 overflow-y-auto p-8 ${showMemberDetails ? 'pr-0' : ''}`}>
-          <Header 
-            title="Dashboard" 
-            showFilterOptions={true}
-          />
-          
-          <div className="grid grid-cols-4 gap-6 mb-8">
-            <StatsCard 
-              icon={BookOpen} 
-              title="Borrowed" 
-              value="142" 
-            />
-            <StatsCard 
-              icon={Clock} 
-              title="Overdue" 
-              value="8" 
-              iconBgColor="bg-library-danger"
-            />
-            <StatsCard 
-              icon={Users} 
-              title="Visitors" 
-              value="532" 
-              iconBgColor="bg-blue-500"
-            />
-            <StatsCard 
-              icon={UserPlus} 
-              title="New member" 
-              value="42" 
-              iconBgColor="bg-green-500"
-            />
-          </div>
-          
-          <div className="mb-8">
-            <BorrowChart />
-          </div>
-          
-          <div className="mb-8">
-            <OverdueTable />
-          </div>
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {isLoading ? (
+            [...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                  <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <>
+              <StatsCard 
+                title="Total Users" 
+                value={stats?.totalUsers.value || 0} 
+                icon={Users}
+                trend={stats?.totalUsers.trend}
+              />
+              <StatsCard 
+                title="Active Loans" 
+                value={stats?.activeLoans.value || 0} 
+                icon={BookOpen}
+                trend={stats?.activeLoans.trend}
+              />
+              <StatsCard 
+                title="Overdue Books" 
+                value={stats?.overdueBooks.value || 0} 
+                icon={Clock}
+                trend={stats?.overdueBooks.trend}
+                className="border-amber-100 dark:border-amber-900"
+              />
+              <StatsCard 
+                title="Total Fines" 
+                value={stats?.totalFines.value || "$0"} 
+                icon={DollarSign}
+                trend={stats?.totalFines.trend}
+              />
+            </>
+          )}
         </div>
         
-        {showMemberDetails && (
-          <div className="w-[350px] border-l border-library-border overflow-y-auto">
-            <div className="p-4 sticky top-0 bg-white border-b border-library-border">
-              <Header 
-                title=""
-                showMemberDetails={true}
-                onCloseMemberDetails={() => setShowMemberDetails(false)}
-              />
-            </div>
-            <div className="p-4">
-              <MemberDetail member={memberData} />
-            </div>
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column (2/3 width on large screens) */}
+          <div className="lg:col-span-2 space-y-6">
+            <VisitorsChart />
+            <BranchTable />
+            <QuickActions />
           </div>
-        )}
+          
+          {/* Right Column (1/3 width on large screens) */}
+          <div className="space-y-6">
+            <ServiceStatus />
+            <Announcements />
+          </div>
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

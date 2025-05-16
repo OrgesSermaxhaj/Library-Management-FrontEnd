@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { FileArrowUp, Send } from "lucide-react";
+import { ArrowUpToLine, Send } from "lucide-react";
 
 const QuickActions = () => {
   return (
@@ -9,7 +9,7 @@ const QuickActions = () => {
       
       <div className="flex flex-col sm:flex-row gap-3">
         <Button className="flex items-center gap-2 w-full">
-          <FileArrowUp size={16} />
+          <ArrowUpToLine size={16} />
           <span>Export Reports</span>
         </Button>
         

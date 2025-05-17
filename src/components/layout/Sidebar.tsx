@@ -16,14 +16,14 @@ import {
 } from "lucide-react";
 
 const navigationItems = [
-  { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { name: "Search Books", path: "/search", icon: Search },
-  { name: "Browse by Category", path: "/categories", icon: BookOpen },
-  { name: "My Library Card", path: "/card", icon: Library },
-  { name: "Loan History", path: "/history", icon: History },
-  { name: "Fines", path: "/fines", icon: DollarSign },
-  { name: "Events & News", path: "/events", icon: Calendar },
-  { name: "Reviews", path: "/reviews", icon: MessageSquare },
+  { name: "Dashboard", path: "/member/dashboard", icon: LayoutDashboard },
+  { name: "Search Books", path: "/member/search", icon: Search },
+  { name: "Browse by Category", path: "/member/categories", icon: BookOpen },
+  { name: "My Library Card", path: "/member/card", icon: Library },
+  { name: "Loan History", path: "/member/history", icon: History },
+  { name: "Fines", path: "/member/fines", icon: DollarSign },
+  { name: "Events & News", path: "/member/events", icon: Calendar },
+  { name: "Reviews", path: "/member/reviews", icon: MessageSquare },
 ];
 
 const Sidebar = () => {

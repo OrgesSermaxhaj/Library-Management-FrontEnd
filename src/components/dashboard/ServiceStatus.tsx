@@ -29,7 +29,7 @@ const ServiceStatus = () => {
           <div key={service.id} className="flex justify-between items-center">
             <p className="text-sm text-gray-700 dark:text-gray-300">{service.name}</p>
             <Badge
-              variant={service.status === "Up" ? "success" : "destructive"}
+              variant={service.status === "Up" ? "default" : "destructive"}
               className={service.status === "Up" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" : ""}
             >
               {service.status}

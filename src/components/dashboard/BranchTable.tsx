@@ -51,7 +51,7 @@ const BranchTable = () => {
                   </TableCell>
                   <TableCell className="text-center">{branch.visitorsToday}</TableCell>
                   <TableCell className="text-right">
-                    <Badge variant={branch.status === "Open" ? "success" : "destructive"} className="ml-auto">
+                    <Badge variant={branch.status === "Open" ? "default" : "destructive"} className={branch.status === "Open" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" : ""}>
                       {branch.status}
                     </Badge>
                   </TableCell>

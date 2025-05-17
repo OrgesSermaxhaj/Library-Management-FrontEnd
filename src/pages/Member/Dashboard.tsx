@@ -7,22 +7,20 @@ import FinesHistoryCard from "@/components/dashboard/FinesHistoryCard";
 const MemberDashboard = () => {
   return (
     <MemberLayout>
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-6">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Member Dashboard</h1>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Member Dashboard</h1>
+        
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Active Loans and Reservations taking up full width on smaller screens and 2/3 on larger screens */}
+          <div className="xl:col-span-2 space-y-6">
             <ActiveLoansCard />
             <ReservationsCard />
           </div>
           
-          <div className="block xl:hidden">
+          {/* Fines History Card taking up 1/3 width on larger screens */}
+          <div>
             <FinesHistoryCard />
           </div>
-        </div>
-        
-        <div className="hidden xl:block">
-          <FinesHistoryCard />
         </div>
       </div>
     </MemberLayout>

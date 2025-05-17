@@ -22,6 +22,15 @@ import Fines from "./pages/Member/Fines";
 import Events from "./pages/Member/Events";
 import Reviews from "./pages/Member/Reviews";
 
+// Librarian dashboard routes
+import LibrarianDashboard from "./pages/Librarian/Dashboard";
+import Inventory from "./pages/Librarian/Inventory";
+import LoanManagement from "./pages/Librarian/LoanManagement";
+import Reservations from "./pages/Librarian/Reservations";
+import Notifications from "./pages/Librarian/Notifications";
+import MemberProfiles from "./pages/Librarian/Members";
+import Announcements from "./pages/Librarian/Announcements";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -49,6 +58,15 @@ const App = () => (
           <Route path="/member/fines" element={<Fines />} />
           <Route path="/member/events" element={<Events />} />
           <Route path="/member/reviews" element={<Reviews />} />
+          
+          {/* Librarian Dashboard Routes */}
+          <Route path="/librarian/dashboard" element={<LibrarianDashboard />} />
+          <Route path="/librarian/inventory" element={<Inventory />} />
+          <Route path="/librarian/loans" element={<LoanManagement />} />
+          <Route path="/librarian/reservations" element={<Reservations />} />
+          <Route path="/librarian/notifications" element={<Notifications />} />
+          <Route path="/librarian/members" element={<MemberProfiles />} />
+          <Route path="/librarian/announcements" element={<Announcements />} />
           
           <Route path="*" element={<NotFound />} />
         </Routes>

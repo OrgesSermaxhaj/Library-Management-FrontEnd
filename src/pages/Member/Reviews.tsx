@@ -13,13 +13,18 @@ const Reviews = () => {
   const { myReviews, popularReviews } = useReviews();
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(0);
+  const [activeTab, setActiveTab] = useState("my-reviews");
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
 
   return (
     <MemberLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Book Reviews</h1>
         
-        <Tabs defaultValue="my-reviews" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
           <TabsList>
             <TabsTrigger value="my-reviews">My Reviews</TabsTrigger>
             <TabsTrigger value="popular">Popular Reviews</TabsTrigger>
@@ -34,7 +39,7 @@ const Reviews = () => {
                   <Button 
                     variant="link" 
                     className="mt-2"
-                    onClick={() => document.querySelector('[data-value="write"]')?.click()}
+                    onClick={() => setActiveTab("write")}
                   >
                     Write your first review
                   </Button>

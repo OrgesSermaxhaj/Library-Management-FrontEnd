@@ -1,7 +1,7 @@
 
 import { ReactNode } from "react";
-import Sidebar from "./Sidebar";
 import Header from "./Header";
+import AdminSidebar from "./AdminSidebar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
 interface AdminLayoutProps {
@@ -11,11 +11,11 @@ interface AdminLayoutProps {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   return (
     <ThemeProvider>
-      <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
+        <AdminSidebar />
+        <div className="flex flex-col flex-1">
           <Header />
-          <main className="flex-1 overflow-y-auto p-4 md:p-6">
+          <main className="flex-1 p-6 overflow-auto">
             {children}
           </main>
         </div>

@@ -8,9 +8,9 @@ const ServiceStatus = () => {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className="h-[360px]">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Service Status</CardTitle>
+          <CardTitle className="text-base font-semibold">Service Status</CardTitle>
         </CardHeader>
         <CardContent className="p-0 pt-2">
           <div className="flex flex-col gap-4 animate-pulse px-6 pb-6">
@@ -27,9 +27,9 @@ const ServiceStatus = () => {
   }
 
   return (
-    <Card>
+    <Card className="h-[360px]">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Service Status</CardTitle>
+        <CardTitle className="text-base font-semibold">Service Status</CardTitle>
       </CardHeader>
       <CardContent className="px-6 pt-0 pb-4">
         <div className="space-y-3">

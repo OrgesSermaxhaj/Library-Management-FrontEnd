@@ -25,16 +25,16 @@ const BookInventory = () => {
   };
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="py-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <Card className="h-[360px] overflow-hidden">
+      <CardHeader className="py-3 px-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <CardTitle className="text-base font-semibold">Book Inventory</CardTitle>
           
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search books..."
-              className="pl-8 h-9"
+              className="pl-8 h-9 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -45,9 +45,9 @@ const BookInventory = () => {
         {isLoading ? (
           <div className="text-center py-4">Loading inventory...</div>
         ) : (
-          <div className="overflow-x-auto max-h-64">
+          <div className="overflow-auto h-[280px]">
             <Table className="w-full">
-              <TableHeader>
+              <TableHeader className="sticky top-0 bg-white dark:bg-gray-800 z-10">
                 <TableRow>
                   <TableHead className="py-2">Title</TableHead>
                   <TableHead className="py-2">Author</TableHead>
@@ -66,12 +66,12 @@ const BookInventory = () => {
                 ) : (
                   filteredBooks.map((book) => (
                     <TableRow key={book.id}>
-                      <TableCell className="font-medium py-2">{book.title}</TableCell>
-                      <TableCell className="py-2">{book.author}</TableCell>
-                      <TableCell className="py-2">{getStockBadge(book.stock)}</TableCell>
-                      <TableCell className="py-2">{book.loans}</TableCell>
+                      <TableCell className="font-medium py-2 text-sm">{book.title}</TableCell>
+                      <TableCell className="py-2 text-sm">{book.author}</TableCell>
+                      <TableCell className="py-2 text-sm">{getStockBadge(book.stock)}</TableCell>
+                      <TableCell className="py-2 text-sm">{book.loans}</TableCell>
                       <TableCell className="py-2">
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
                           <Edit className="h-4 w-4" />
                         </Button>
                       </TableCell>

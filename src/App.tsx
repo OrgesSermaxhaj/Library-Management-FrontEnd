@@ -12,6 +12,9 @@ import Members from "./pages/Members";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 
+// Admin dashboard routes
+import AdminDashboard from "./pages/Admin/Dashboard";
+
 // Member dashboard routes
 import MemberDashboard from "./pages/Member/Dashboard";
 import SearchBooks from "./pages/Member/SearchBooks";
@@ -43,11 +46,22 @@ const App = () => (
           {/* Admin Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Index />} />
+          <Route path="/signup" element={<Signup />} />
+          
+          {/* Legacy/Temporary Routes */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/books" element={<Books />} />
           <Route path="/members" element={<Members />} />
-          <Route path="/users" element={<Members />} /> {/* Temporary mapping */}
-          <Route path="/signup" element={<Signup />} />
+          <Route path="/users" element={<Members />} />
+          
+          {/* Admin Dashboard Routes */}
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/users" element={<Members />} />
+          <Route path="/admin/books" element={<Books />} />
+          <Route path="/admin/branches" element={<Dashboard />} />
+          <Route path="/admin/settings" element={<Dashboard />} />
+          <Route path="/admin/reports" element={<Dashboard />} />
+          <Route path="/admin/announcements" element={<Dashboard />} />
           
           {/* Member Dashboard Routes */}
           <Route path="/member/dashboard" element={<MemberDashboard />} />
@@ -68,6 +82,7 @@ const App = () => (
           <Route path="/librarian/members" element={<MemberProfiles />} />
           <Route path="/librarian/announcements" element={<Announcements />} />
           
+          {/* Fallback */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

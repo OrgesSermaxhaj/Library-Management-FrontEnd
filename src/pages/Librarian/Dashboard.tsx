@@ -15,15 +15,15 @@ const LibrarianDashboard = () => {
           <QrScanButton />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Today's Activity and Service Status in the first column */}
-          <div className="md:col-span-1 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Today's Activity and Service Status in a narrower column */}
+          <div className="lg:col-span-1 space-y-6">
             <TodaysActivity />
             <ServiceStatus />
           </div>
           
-          {/* Book Inventory and Branch table in the second and third columns */}
-          <div className="md:col-span-2 space-y-6">
+          {/* Book Inventory and Branch table in a wider column */}
+          <div className="lg:col-span-3 space-y-6">
             <BookInventory />
             <BranchTable />
           </div>

@@ -26,51 +26,51 @@ const BookInventory = () => {
 
   return (
     <Card className="overflow-hidden">
-      <CardHeader className="pb-0">
+      <CardHeader className="py-3">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle className="text-lg font-semibold">Book Inventory</CardTitle>
+          <CardTitle className="text-base font-semibold">Book Inventory</CardTitle>
           
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search books..."
-              className="pl-8"
+              className="pl-8 h-9"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0 mt-4">
+      <CardContent className="p-0">
         {isLoading ? (
-          <div className="text-center py-6">Loading inventory...</div>
+          <div className="text-center py-4">Loading inventory...</div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-64">
             <Table className="w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Author</TableHead>
-                  <TableHead>Stock</TableHead>
-                  <TableHead>Loans</TableHead>
-                  <TableHead className="w-[80px]"></TableHead>
+                  <TableHead className="py-2">Title</TableHead>
+                  <TableHead className="py-2">Author</TableHead>
+                  <TableHead className="py-2">Stock</TableHead>
+                  <TableHead className="py-2">Loans</TableHead>
+                  <TableHead className="w-[80px] py-2"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredBooks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6">
+                    <TableCell colSpan={5} className="text-center py-4">
                       No books found matching your search
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredBooks.map((book) => (
                     <TableRow key={book.id}>
-                      <TableCell className="font-medium">{book.title}</TableCell>
-                      <TableCell>{book.author}</TableCell>
-                      <TableCell>{getStockBadge(book.stock)}</TableCell>
-                      <TableCell>{book.loans}</TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium py-2">{book.title}</TableCell>
+                      <TableCell className="py-2">{book.author}</TableCell>
+                      <TableCell className="py-2">{getStockBadge(book.stock)}</TableCell>
+                      <TableCell className="py-2">{book.loans}</TableCell>
+                      <TableCell className="py-2">
                         <Button variant="ghost" size="icon">
                           <Edit className="h-4 w-4" />
                         </Button>

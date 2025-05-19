@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Search, Edit, Book } from "lucide-react";
+import { Search, Edit } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,16 +19,16 @@ const BookInventory = () => {
   );
 
   const getStockBadge = (stock: number) => {
-    if (stock > 5) return <Badge className="bg-green-500">In Stock ({stock})</Badge>;
+    if (stock > 5) return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">In Stock ({stock})</Badge>;
     if (stock > 0) return <Badge variant="outline" className="text-amber-500 border-amber-500">Low Stock ({stock})</Badge>;
     return <Badge variant="destructive">Out of Stock</Badge>;
   };
 
   return (
-    <Card>
+    <Card className="overflow-hidden">
       <CardHeader className="pb-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle className="text-xl font-semibold">Book Inventory</CardTitle>
+          <CardTitle className="text-lg font-semibold">Book Inventory</CardTitle>
           
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -41,12 +41,12 @@ const BookInventory = () => {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0 mt-4">
         {isLoading ? (
           <div className="text-center py-6">Loading inventory...</div>
         ) : (
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>

@@ -1,8 +1,7 @@
-
 import { ReactNode } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
-import { ThemeProvider } from "@/hooks/useTheme";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 interface MemberLayoutProps {
   children: ReactNode;

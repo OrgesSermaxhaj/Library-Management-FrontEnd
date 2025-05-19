@@ -1,14 +1,76 @@
-
 import MemberLayout from "@/components/layout/MemberLayout";
+import { useBooks } from '@/hooks/useBooks';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Book, ChevronRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Categories = () => {
+  const { books, categories, isLoading, error } = useBooks();
+
+  // Count books in each category
+  const categoryCounts = categories.reduce((acc, category) => {
+    const count = books.filter(book => book.categoryId === category.id).length;
+    acc[category.id] = count;
+    return acc;
+  }, {} as Record<number, number>);
+
+  if (isLoading) {
+    return (
+      <MemberLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+        </div>
+      </MemberLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MemberLayout>
+        <div className="container mx-auto py-8">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        </div>
+      </MemberLayout>
+    );
+  }
+
   return (
     <MemberLayout>
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Browse by Category</h1>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
-          <p className="text-gray-500 dark:text-gray-400">Category browsing will be implemented here.</p>
-        </div>
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-8">Browse by Category</h1>
+
+        {categories.length === 0 ? (
+          <div className="text-center py-12">
+            <Book className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No categories found</h3>
+            <p className="mt-1 text-sm text-gray-500">Categories will appear here once they are added to the library</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categories.map(category => (
+              <Card key={category.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg">{category.name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500">
+                      {categoryCounts[category.id] || 0} books available
+                    </p>
+                    <Button className="w-full" asChild>
+                      <Link to={`/member/category/${category.id}`}>
+                        View Books <ChevronRight className="ml-2 h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </MemberLayout>
   );

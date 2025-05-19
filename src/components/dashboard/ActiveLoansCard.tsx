@@ -1,8 +1,7 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useActiveLoans, Loan } from "@/hooks/useActiveLoans";
-import { Calendar } from "lucide-react";
+import { Calendar, BookOpen } from "lucide-react";
 import { format, parseISO, isAfter } from "date-fns";
 
 const LoanItem = ({ loan, onReturn }: { loan: Loan; onReturn: (id: string) => void }) => {
@@ -44,13 +43,6 @@ const LoanItem = ({ loan, onReturn }: { loan: Loan; onReturn: (id: string) => vo
   );
 };
 
-const BookOpen = ({ size }: { size: number }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-  </svg>
-);
-
 const ActiveLoansCard = () => {
   const { loans, isLoading, error, returnLoan } = useActiveLoans();
   
@@ -75,7 +67,7 @@ const ActiveLoansCard = () => {
         ) : loans.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             <p>You have no active loans.</p>
-            <Button className="mt-4" variant="outline" onClick={() => window.location.href = '/search'}>
+            <Button className="mt-4" variant="outline" onClick={() => window.location.href = '/member/search'}>
               Browse Books
             </Button>
           </div>

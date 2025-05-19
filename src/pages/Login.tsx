@@ -11,29 +11,20 @@ import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
-interface SignupValues {
-  name: string;
+interface LoginValues {
   email: string;
   password: string;
-  confirmPassword: string;
   tenantId: string;
 }
 
-const signupSchema = Yup.object().shape({
-  name: Yup.string().required('Name is required'),
+const loginSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email').required('Email is required'),
-  password: Yup.string()
-    .min(8, 'Password must be at least 8 characters')
-    .required('Password is required'),
-  confirmPassword: Yup.string()
-    .oneOf([Yup.ref('password')], 'Passwords must match')
-    .required('Confirm password is required'),
+  password: Yup.string().required('Password is required'),
   tenantId: Yup.string().required('Tenant ID is required'),
 });
 
-const Signup = () => {
+const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { setToken, setUser, setTenantId } = useAuth();
   const navigate = useNavigate();
 
@@ -41,22 +32,20 @@ const Signup = () => {
     <div className="min-h-screen flex items-center justify-center bg-library-background">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Welcome Back</CardTitle>
           <CardDescription className="text-center">
-            Sign up to get started with your library account
+            Sign in to your library account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Formik
             initialValues={{
-              name: '',
               email: '',
               password: '',
-              confirmPassword: '',
               tenantId: '',
             }}
-            validationSchema={signupSchema}
-            onSubmit={async (values: SignupValues, { setSubmitting }) => {
+            validationSchema={loginSchema}
+            onSubmit={async (values: LoginValues, { setSubmitting }) => {
               try {
                 if (!values.tenantId) {
                   toast.error('Tenant ID is required');
@@ -66,19 +55,17 @@ const Signup = () => {
                 // Store tenant ID in localStorage before making the request
                 localStorage.setItem('tenantId', values.tenantId);
 
-                console.log('Attempting registration with:', {
-                  fullName: values.name,
+                console.log('Attempting login with:', {
                   email: values.email,
                   tenantId: values.tenantId,
                 });
 
-                const res = await api.post('/auth/register', {
-                  fullName: values.name,
+                const res = await api.post('/auth/login', {
                   email: values.email,
                   password: values.password,
                 });
                 
-                console.log('Registration response:', res.data);
+                console.log('Login response:', res.data);
                 
                 // Store auth data
                 setToken(res.data.token);
@@ -93,32 +80,43 @@ const Signup = () => {
                 
                 // Store in localStorage
                 localStorage.setItem('token', res.data.token);
-                localStorage.setItem('tenantId', values.tenantId);
                 localStorage.setItem('user', JSON.stringify({
                   id: res.data.userId,
-                  name: res.data.fullName || '',
+                  name: res.data.fullName,
                   email: res.data.email,
                   role: res.data.role,
                   tenantId: values.tenantId
                 }));
                 
-                toast.success('Registration successful! Please log in.');
+                toast.success('Login successful');
                 
-                // Navigate to login page instead of dashboard
-                navigate('/login');
+                // Redirect based on role
+                switch (res.data.role) {
+                  case 'ADMIN':
+                    navigate('/admin/dashboard');
+                    break;
+                  case 'LIBRARIAN':
+                    navigate('/librarian/dashboard');
+                    break;
+                  case 'MEMBER':
+                    navigate('/member/dashboard');
+                    break;
+                  default:
+                    navigate('/dashboard');
+                }
               } catch (err: any) {
-                console.error('Registration error:', err);
+                console.error('Login error:', err);
                 console.error('Error response:', err.response?.data);
                 console.error('Error headers:', err.response?.headers);
                 console.error('Error status:', err.response?.status);
                 
-                // Clear tenant ID if registration fails
+                // Clear tenant ID if login fails
                 localStorage.removeItem('tenantId');
                 
                 const errorMessage = err.response?.data?.message 
                   || err.response?.data?.error 
                   || err.message 
-                  || 'Registration failed';
+                  || 'Login failed';
                 
                 toast.error(errorMessage);
               } finally {
@@ -128,19 +126,6 @@ const Signup = () => {
           >
             {({ isSubmitting, errors, touched }) => (
               <Form className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <Field
-                    as={Input}
-                    id="name"
-                    name="name"
-                    placeholder="Enter your full name"
-                  />
-                  {errors.name && touched.name && (
-                    <div className="text-sm text-red-500">{errors.name}</div>
-                  )}
-                </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="tenantId">Tenant ID</Label>
                   <Field
@@ -195,39 +180,12 @@ const Signup = () => {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative">
-                    <Field
-                      as={Input}
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4 text-gray-500" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-gray-500" />
-                      )}
-                    </button>
-                  </div>
-                  {errors.confirmPassword && touched.confirmPassword && (
-                    <div className="text-sm text-red-500">{errors.confirmPassword}</div>
-                  )}
-                </div>
-
                 <Button
                   type="submit"
                   className="w-full"
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? "Creating account..." : "Create Account"}
+                  {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
               </Form>
             )}
@@ -235,12 +193,12 @@ const Signup = () => {
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-gray-500">
-            Already have an account?{" "}
+            Don't have an account?{" "}
             <button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/signup")}
               className="text-library-primary hover:underline"
             >
-              Log in
+              Sign up
             </button>
           </p>
         </CardFooter>
@@ -249,4 +207,4 @@ const Signup = () => {
   );
 };
 
-export default Signup;
+export default Login; 

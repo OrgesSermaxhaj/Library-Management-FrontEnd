@@ -1,60 +1,33 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { loanService, Reservation } from '@/services/loans';
+import { toast } from 'sonner';
 
-import { useState, useEffect } from 'react';
-
-export interface Reservation {
-  id: string;
-  title: string;
-  author: string;
-  coverImage: string;
-  position: number;
-  estimatedAvailability: string;
-}
+export { type Reservation } from '@/services/loans';
 
 export function useReservations() {
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    // Simulate API call
-    const fetchReservations = () => {
-      setIsLoading(true);
-      
-      // Dummy data
-      setTimeout(() => {
-        const dummyReservations: Reservation[] = [
-          {
-            id: "res-1",
-            title: "Fourth Wing",
-            author: "Rebecca Yarros",
-            coverImage: "https://images.unsplash.com/photo-1629992101753-56d196c8aabb?q=80&w=100",
-            position: 1,
-            estimatedAvailability: "2025-05-20"
-          },
-          {
-            id: "res-2",
-            title: "The Wager",
-            author: "David Grann",
-            coverImage: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?q=80&w=100",
-            position: 3,
-            estimatedAvailability: "2025-05-28"
-          }
-        ];
-        
-        setReservations(dummyReservations);
-        setIsLoading(false);
-        setError(null);
-      }, 500);
-    };
-    
-    fetchReservations();
-  }, []);
-  
-  const cancelReservation = (reservationId: string) => {
-    setReservations(prevReservations => 
-      prevReservations.filter(reservation => reservation.id !== reservationId)
-    );
+  const queryClient = useQueryClient();
+
+  const { data: reservations = [], isLoading, error } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: loanService.getReservations
+  });
+
+  const cancelReservation = useMutation({
+    mutationFn: (reservationId: string) => loanService.cancelReservation(reservationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      toast.success('Reservation canceled successfully');
+    },
+    onError: (error) => {
+      toast.error('Failed to cancel reservation');
+      console.error('Cancel reservation error:', error);
+    }
+  });
+
+  return {
+    reservations,
+    isLoading,
+    error: error ? 'Failed to load reservations' : null,
+    cancelReservation: cancelReservation.mutate
   };
-  
-  return { reservations, isLoading, error, cancelReservation };
 }

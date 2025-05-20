@@ -1,33 +1,40 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { loanService, Loan } from '@/services/loans';
+import { loanService } from '@/services/loans';
 import { toast } from 'sonner';
 
-export { type Loan } from '@/services/loans';
-
-export function useActiveLoans() {
+export function useActiveLoans(userId?: number) {
   const queryClient = useQueryClient();
 
   const { data: loans = [], isLoading, error } = useQuery({
-    queryKey: ['activeLoans'],
-    queryFn: loanService.getActiveLoans
+    queryKey: ['activeLoans', userId],
+    queryFn: () => loanService.getActiveLoans(),
+    enabled: !!userId,
+    retry: 1,
   });
 
-  const returnLoan = useMutation({
-    mutationFn: (loanId: string) => loanService.returnBook(loanId),
+  const returnLoanMutation = useMutation({
+    mutationFn: loanService.returnBook,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activeLoans'] });
       toast.success('Book returned successfully');
     },
-    onError: (error) => {
-      toast.error('Failed to return book');
-      console.error('Return book error:', error);
-    }
+    onError: (error: any) => {
+      console.error('Failed to return book:', error);
+      toast.error(error.response?.data?.message || 'Failed to return book');
+    },
   });
+
+  // Handle query errors
+  if (error) {
+    console.error('Failed to fetch active loans:', error);
+    toast.error((error as any).response?.data?.message || 'Failed to load active loans');
+  }
 
   return {
     loans,
     isLoading,
-    error: error ? 'Failed to load active loans' : null,
-    returnLoan: returnLoan.mutate
+    error: error ? (error as any).response?.data?.message || 'Failed to load active loans' : null,
+    returnLoan: returnLoanMutation.mutate,
+    isReturning: returnLoanMutation.isPending
   };
 }

@@ -50,5 +50,11 @@ export const loanService = {
   // Cancel a reservation
   async cancelReservation(reservationId: string): Promise<void> {
     await api.delete(`/reservations/${reservationId}`);
+  },
+
+  // Create a new reservation
+  async createReservation(bookId: string): Promise<Reservation> {
+    const response = await api.post('/reservations', { bookId });
+    return response.data;
   }
 }; 

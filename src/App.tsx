@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 
 // Admin dashboard routes
 import AdminDashboard from "./pages/Admin/Dashboard";
+import UserManagement from "./pages/Admin/UserManagement";
 
 // Member dashboard routes
 import MemberDashboard from "./pages/Member/Dashboard";
@@ -80,7 +81,7 @@ const App = () => (
           } />
           <Route path="/admin/users" element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <Members />
+              <UserManagement />
             </ProtectedRoute>
           } />
           <Route path="/admin/books" element={

@@ -1,87 +1,123 @@
-
-import { useState } from "react";
-import { Search, Edit } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { useBookInventory } from "@/hooks/useBookInventory";
+import { Progress } from "@/components/ui/progress";
+
+interface BookInventoryItem {
+  id: number;
+  title: string;
+  available: number;
+  total: number;
+  category: string;
+}
 
 const BookInventory = () => {
-  const { books, isLoading } = useBookInventory();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [inventory, setInventory] = useState<BookInventoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredBooks = books.filter(
-    (book) =>
-      book.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      book.author.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    const fetchInventory = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
 
-  const getStockBadge = (stock: number) => {
-    if (stock > 5) return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">In Stock ({stock})</Badge>;
-    if (stock > 0) return <Badge variant="outline" className="text-amber-500 border-amber-500">Low Stock ({stock})</Badge>;
-    return <Badge variant="destructive">Out of Stock</Badge>;
-  };
+        // Mock data
+        const mockInventory: BookInventoryItem[] = [
+          {
+            id: 1,
+            title: "The Great Gatsby",
+            available: 3,
+            total: 5,
+            category: "Fiction"
+          },
+          {
+            id: 2,
+            title: "To Kill a Mockingbird",
+            available: 2,
+            total: 4,
+            category: "Fiction"
+          },
+          {
+            id: 3,
+            title: "1984",
+            available: 1,
+            total: 3,
+            category: "Science Fiction"
+          },
+          {
+            id: 4,
+            title: "Pride and Prejudice",
+            available: 4,
+            total: 6,
+            category: "Romance"
+          }
+        ];
+
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setInventory(mockInventory);
+      } catch (err) {
+        setError('Failed to fetch book inventory');
+        console.error('Error fetching book inventory:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchInventory();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Book Inventory</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Book Inventory</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500">{error}</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card className="h-[360px] overflow-hidden">
-      <CardHeader className="py-3 px-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <CardTitle className="text-base font-semibold">Book Inventory</CardTitle>
-          
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search books..."
-              className="pl-8 h-9 text-sm"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Book Inventory</CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
-        {isLoading ? (
-          <div className="text-center py-4">Loading inventory...</div>
-        ) : (
-          <div className="overflow-auto h-[280px]">
-            <Table className="w-full">
-              <TableHeader className="sticky top-0 bg-white dark:bg-gray-800 z-10">
-                <TableRow>
-                  <TableHead className="py-2">Title</TableHead>
-                  <TableHead className="py-2">Author</TableHead>
-                  <TableHead className="py-2">Stock</TableHead>
-                  <TableHead className="py-2">Loans</TableHead>
-                  <TableHead className="w-[80px] py-2"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBooks.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-4">
-                      No books found matching your search
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredBooks.map((book) => (
-                    <TableRow key={book.id}>
-                      <TableCell className="font-medium py-2 text-sm">{book.title}</TableCell>
-                      <TableCell className="py-2 text-sm">{book.author}</TableCell>
-                      <TableCell className="py-2 text-sm">{getStockBadge(book.stock)}</TableCell>
-                      <TableCell className="py-2 text-sm">{book.loans}</TableCell>
-                      <TableCell className="py-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+      <CardContent>
+        <div className="space-y-4">
+          {inventory.map((book) => (
+            <div key={book.id} className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="font-medium">{book.title}</h4>
+                  <p className="text-sm text-gray-500">{book.category}</p>
+                </div>
+                <div className="text-sm">
+                  {book.available}/{book.total} available
+                </div>
+              </div>
+              <Progress value={(book.available / book.total) * 100} />
+            </div>
+          ))}
+        </div>
       </CardContent>
     </Card>
   );

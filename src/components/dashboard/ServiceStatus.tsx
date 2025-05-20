@@ -1,47 +1,119 @@
-
-import { Badge } from "@/components/ui/badge";
-import { useServiceStatus } from "@/hooks/useServiceStatus";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { format } from "date-fns";
+
+interface Service {
+  name: string;
+  status: 'operational' | 'degraded' | 'down';
+  lastChecked: string;
+}
 
 const ServiceStatus = () => {
-  const { services, isLoading } = useServiceStatus();
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchServiceStatus = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Mock data
+        const mockServices: Service[] = [
+          {
+            name: 'Database',
+            status: 'operational',
+            lastChecked: new Date().toISOString()
+          },
+          {
+            name: 'Authentication',
+            status: 'operational',
+            lastChecked: new Date().toISOString()
+          },
+          {
+            name: 'File Storage',
+            status: 'degraded',
+            lastChecked: new Date().toISOString()
+          },
+          {
+            name: 'Email Service',
+            status: 'down',
+            lastChecked: new Date().toISOString()
+          }
+        ];
+
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setServices(mockServices);
+      } catch (err) {
+        setError('Failed to fetch service status');
+        console.error('Error fetching service status:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchServiceStatus();
+  }, []);
+
+  const getStatusIcon = (status: Service['status']) => {
+    switch (status) {
+      case 'operational':
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case 'degraded':
+        return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+      case 'down':
+        return <XCircle className="h-4 w-4 text-red-500" />;
+    }
+  };
 
   if (isLoading) {
     return (
-      <Card className="h-[360px]">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Service Status</CardTitle>
+          <CardTitle>Service Status</CardTitle>
         </CardHeader>
-        <CardContent className="p-0 pt-2">
-          <div className="flex flex-col gap-4 animate-pulse px-6 pb-6">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex justify-between items-center">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-              </div>
-            ))}
+        <CardContent>
+          <div className="flex items-center justify-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
         </CardContent>
       </Card>
     );
   }
 
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Service Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-red-500">{error}</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="h-[360px]">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-base font-semibold">Service Status</CardTitle>
+        <CardTitle>Service Status</CardTitle>
       </CardHeader>
-      <CardContent className="px-6 pt-0 pb-4">
-        <div className="space-y-3">
+      <CardContent>
+        <div className="space-y-4">
           {services.map((service) => (
-            <div key={service.id} className="flex justify-between items-center">
-              <p className="text-sm text-gray-700 dark:text-gray-300">{service.name}</p>
-              <Badge
-                variant={service.status === "Up" ? "default" : "destructive"}
-                className={service.status === "Up" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" : ""}
-              >
-                {service.status}
-              </Badge>
+            <div key={service.name} className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                {getStatusIcon(service.status)}
+                <span className="text-sm font-medium">{service.name}</span>
+              </div>
+              <span className="text-xs text-gray-500">
+                {format(new Date(service.lastChecked), 'h:mm a')}
+              </span>
             </div>
           ))}
         </div>

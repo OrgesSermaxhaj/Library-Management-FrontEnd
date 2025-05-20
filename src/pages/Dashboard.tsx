@@ -1,4 +1,3 @@
-
 import { Users, BookOpen, Clock, DollarSign } from "lucide-react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import StatsCard from "@/components/dashboard/StatsCard";

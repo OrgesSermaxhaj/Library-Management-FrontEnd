@@ -35,11 +35,42 @@ export interface BookSearchParams {
   limit?: number;
 }
 
+export interface AddBookData {
+  title: string;
+  isbn: string;
+  quantity: number;
+  authorId: number;
+  categoryId: number;
+  publisherId: number;
+}
+
+export const addBook = async (bookData: AddBookData) => {
+  try {
+    console.log('Making API call to add book with data:', bookData);
+    const response = await api.post('/books', bookData);
+    console.log('API response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    throw error;
+  }
+};
+
 export const bookService = {
   // Get all books
   async getAllBooks(): Promise<Book[]> {
+    try {
     const response = await api.get('/books');
+      console.log('Fetched books:', response.data);
     return response.data;
+    } catch (error) {
+      console.error('Error fetching books:', error);
+      throw error;
+    }
   },
 
   // Get book by ID
@@ -49,21 +80,39 @@ export const bookService = {
   },
 
   // Get all authors
-  async getAllAuthors(): Promise<Author[]> {
+  async getAllAuthors(): Promise<{ id: number; name: string }[]> {
+    try {
     const response = await api.get('/authors');
+      console.log('Fetched authors:', response.data);
     return response.data;
+    } catch (error) {
+      console.error('Error fetching authors:', error);
+      throw error;
+    }
   },
 
   // Get all categories
-  async getAllCategories(): Promise<Category[]> {
+  async getAllCategories(): Promise<{ id: number; name: string }[]> {
+    try {
     const response = await api.get('/categories');
+      console.log('Fetched categories:', response.data);
     return response.data;
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      throw error;
+    }
   },
 
   // Get all publishers
-  async getAllPublishers(): Promise<Publisher[]> {
+  async getAllPublishers(): Promise<{ id: number; name: string }[]> {
+    try {
     const response = await api.get('/publishers');
+      console.log('Fetched publishers:', response.data);
     return response.data;
+    } catch (error) {
+      console.error('Error fetching publishers:', error);
+      throw error;
+    }
   },
 
   async getBooks(params: BookSearchParams = {}): Promise<{ books: Book[]; total: number }> {

@@ -1,115 +1,90 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Plus } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
+import { AddBookForm } from "@/components/books/AddBookForm";
+import { EditBookForm } from "@/components/books/EditBookForm";
+import { addBook, bookService } from "@/services/books";
+import { toast } from "sonner";
 
 interface Book {
   id: string;
   title: string;
   author: string;
   genre: string;
-  status: "Available" | "Borrowed" | "Reserved";
-  location: string;
-  addedDate: string;
+  isbn: string;
+  quantity: number;
 }
-
-const booksData: Book[] = [
-  {
-    id: "BK-43251",
-    title: "The Midnight Line",
-    author: "Lee Child",
-    genre: "Thriller",
-    status: "Borrowed",
-    location: "Fiction, Shelf 3",
-    addedDate: "Jan 10, 2022",
-  },
-  {
-    id: "BK-52345",
-    title: "Ender's Game",
-    author: "Orson Scott Card",
-    genre: "Science Fiction",
-    status: "Borrowed",
-    location: "Sci-Fi, Shelf 1",
-    addedDate: "Feb 15, 2022",
-  },
-  {
-    id: "BK-78901",
-    title: "To Kill a Mockingbird",
-    author: "Harper Lee",
-    genre: "Classic",
-    status: "Available",
-    location: "Classic, Shelf 2",
-    addedDate: "Mar 5, 2022",
-  },
-  {
-    id: "BK-23456",
-    title: "The Great Gatsby",
-    author: "F. Scott Fitzgerald",
-    genre: "Classic",
-    status: "Available",
-    location: "Classic, Shelf 2",
-    addedDate: "Mar 10, 2022",
-  },
-  {
-    id: "BK-67890",
-    title: "1984",
-    author: "George Orwell",
-    genre: "Dystopian",
-    status: "Reserved",
-    location: "Fiction, Shelf 4",
-    addedDate: "Apr 15, 2022",
-  },
-  {
-    id: "BK-34567",
-    title: "Pride and Prejudice",
-    author: "Jane Austen",
-    genre: "Romance",
-    status: "Available",
-    location: "Fiction, Shelf 1",
-    addedDate: "Apr 20, 2022",
-  },
-  {
-    id: "BK-89012",
-    title: "Harry Potter and the Philosopher's Stone",
-    author: "J.K. Rowling",
-    genre: "Fantasy",
-    status: "Borrowed",
-    location: "Fantasy, Shelf 2",
-    addedDate: "May 1, 2022",
-  },
-  {
-    id: "BK-45678",
-    title: "The Hobbit",
-    author: "J.R.R. Tolkien",
-    genre: "Fantasy",
-    status: "Available",
-    location: "Fantasy, Shelf 1",
-    addedDate: "May 5, 2022",
-  },
-];
 
 const Books = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const filteredBooks = booksData.filter((book) => 
+  const [books, setBooks] = useState<Book[]>([]);
+  const [authors, setAuthors] = useState<{ id: number; name: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
+
+  const fetchBooks = async () => {
+    try {
+      const [booksData, authorsData, categoriesData] = await Promise.all([
+        bookService.getAllBooks(),
+        bookService.getAllAuthors(),
+        bookService.getAllCategories()
+      ]);
+      setBooks(booksData.map(book => ({
+        id: book.id.toString(),
+        title: book.title,
+        author: authorsData.find(a => a.id === book.authorId)?.name || 'Unknown',
+        genre: categoriesData.find(c => c.id === book.categoryId)?.name || 'Unknown',
+        isbn: book.isbn,
+        quantity: book.quantity
+      })));
+      setAuthors(authorsData);
+      setCategories(categoriesData);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Failed to load books");
+    }
+  };
+
+  useEffect(() => {
+    fetchBooks();
+  }, []);
+
+  const filteredBooks = books.filter((book) => 
     book.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
     book.author.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
-  const getStatusColor = (status: Book["status"]) => {
-    switch (status) {
-      case "Available":
-        return "bg-green-100 text-green-700";
-      case "Borrowed":
-        return "bg-blue-100 text-blue-700";
-      case "Reserved":
-        return "bg-amber-100 text-amber-700";
-      default:
-        return "bg-gray-100 text-gray-700";
+
+  const handleAddBook = async (bookData: {
+    title: string;
+    isbn: string;
+    quantity: number;
+    authorId: number;
+    categoryId: number;
+    publisherId: number;
+  }) => {
+    try {
+      console.log("Sending book data:", bookData);
+      const newBook = await addBook(bookData);
+      console.log("Received response:", newBook);
+      await fetchBooks();
+      toast.success("Book added successfully!");
+    } catch (error) {
+      console.error("Error adding book:", error);
+      toast.error("Failed to add book. Please check the console for details.");
+    }
+  };
+
+  const handleDeleteBook = async (bookId: string) => {
+    try {
+      await bookService.deleteBook(bookId);
+      setBooks(books.filter(book => book.id !== bookId));
+      toast.success("Book deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting book:", error);
+      toast.error("Failed to delete book");
     }
   };
   
@@ -130,52 +105,57 @@ const Books = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button className="bg-library-primary hover:bg-library-secondary gap-2">
-            <Plus size={16} />
-            Add Book
-          </Button>
+          <AddBookForm onAddBook={handleAddBook} />
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Book ID</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Author</TableHead>
-                <TableHead>Genre</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Added Date</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBooks.length > 0 ? (
-                filteredBooks.map((book) => (
-                  <TableRow key={book.id} className="hover:bg-gray-50">
-                    <TableCell className="font-medium">{book.id}</TableCell>
-                    <TableCell>{book.title}</TableCell>
-                    <TableCell>{book.author}</TableCell>
-                    <TableCell>{book.genre}</TableCell>
-                    <TableCell>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(book.status)}`}>
-                        {book.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>{book.location}</TableCell>
-                    <TableCell>{book.addedDate}</TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                    No books found matching your search.
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Author</TableHead>
+              <TableHead>Genre</TableHead>
+              <TableHead>ISBN</TableHead>
+              <TableHead>Quantity</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredBooks.length > 0 ? (
+              filteredBooks.map((book) => (
+                <TableRow key={book.id} className="hover:bg-gray-50">
+                  <TableCell className="font-medium">{book.title}</TableCell>
+                  <TableCell>{book.author}</TableCell>
+                  <TableCell>{book.genre}</TableCell>
+                  <TableCell>{book.isbn}</TableCell>
+                  <TableCell>{book.quantity}</TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <EditBookForm
+                        book={book}
+                        authors={authors}
+                        categories={categories}
+                        onEditComplete={fetchBooks}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteBook(book.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-red-500" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  No books found matching your search.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

@@ -34,6 +34,7 @@ api.interceptors.request.use(
     // Always include tenant ID unless the path is excluded
     if (!shouldExcludeTenant) {
       if (!tenantId) {
+        console.error('Missing tenant ID for request:', config.url);
         return Promise.reject(new Error('Tenant ID is required'));
       }
       config.headers.set('X-Tenant-ID', tenantId);
@@ -49,6 +50,8 @@ api.interceptors.request.use(
       method: config.method,
       headers: config.headers,
       data: config.data,
+      baseURL: config.baseURL,
+      params: config.params
     });
 
     return config;
@@ -66,7 +69,14 @@ api.interceptors.response.use(
     console.log('API Response:', {
       url: response.config.url,
       status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
       data: response.data,
+      config: {
+        method: response.config.method,
+        baseURL: response.config.baseURL,
+        headers: response.config.headers
+      }
     });
     return response;
   },
@@ -75,9 +85,14 @@ api.interceptors.response.use(
     console.error('API Error:', {
       url: error.config?.url,
       status: error.response?.status,
+      statusText: error.response?.statusText,
       data: error.response?.data,
       message: error.message,
       headers: error.config?.headers,
+      config: {
+        method: error.config?.method,
+        baseURL: error.config?.baseURL
+      }
     });
 
     if (error.response?.status === 401) {

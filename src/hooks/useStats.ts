@@ -1,6 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
+import { useUsers } from "./useUsers";
+import { useBooks } from "./useBooks";
 
-export interface StatsData {
+interface StatsData {
+  totalUsers: {
+    value: number;
+    trend: { value: number; isPositive: boolean };
+  };
+  activeLoans: {
+    value: number;
+    trend: { value: number; isPositive: boolean };
+  };
+  overdueBooks: {
+    value: number;
+    trend: { value: number; isPositive: boolean };
+  };
+  totalFines: {
+    value: string;
+    trend: { value: number; isPositive: boolean };
+  };
   totalBooks: {
     value: number;
     trend: { value: number; isPositive: boolean };
@@ -9,61 +27,70 @@ export interface StatsData {
     value: number;
     trend: { value: number; isPositive: boolean };
   };
-  overdueLoans: {
+  issuesReported: {
     value: number;
     trend: { value: number; isPositive: boolean };
   };
-  issuesReported: {
+  overdueLoans: {
     value: number;
     trend: { value: number; isPositive: boolean };
   };
 }
 
-export const useStats = () => {
+export function useStats() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { users } = useUsers();
+  const { books } = useBooks();
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+    if (users && books) {
+      // Calculate total users
+      const totalUsers = users.length;
+      
+      // Calculate total books
+      const totalBooks = books.length;
+      
+      // Calculate active members (users with role MEMBER)
+      const activeMembers = users.filter(user => user.role === "MEMBER").length;
 
-        // Using mock data temporarily since we don't have access to the real endpoints yet
-        const mockStats: StatsData = {
-          totalBooks: {
-            value: 150,
-            trend: { value: 5, isPositive: true }
-          },
-          activeMembers: {
-            value: 45,
-            trend: { value: 2, isPositive: true }
-          },
-          overdueLoans: {
-            value: 12,
-            trend: { value: 3, isPositive: false }
-          },
-          issuesReported: {
-            value: 3,
-            trend: { value: 1, isPositive: false }
-          }
-        };
+      setStats({
+        totalUsers: {
+          value: totalUsers,
+          trend: { value: 0, isPositive: true } // We don't have historical data for trend
+        },
+        activeLoans: {
+          value: 0, // We'll need to implement this
+          trend: { value: 0, isPositive: true }
+        },
+        overdueBooks: {
+          value: 0, // We'll need to implement this
+          trend: { value: 0, isPositive: false }
+        },
+        totalFines: {
+          value: "$0.00", // We'll need to implement this
+          trend: { value: 0, isPositive: true }
+        },
+        totalBooks: {
+          value: totalBooks,
+          trend: { value: 0, isPositive: true }
+        },
+        activeMembers: {
+          value: activeMembers,
+          trend: { value: 0, isPositive: true }
+        },
+        issuesReported: {
+          value: 0, // We'll need to implement this
+          trend: { value: 0, isPositive: false }
+        },
+        overdueLoans: {
+          value: 0, // We'll need to implement this
+          trend: { value: 0, isPositive: false }
+        }
+      });
+      setIsLoading(false);
+    }
+  }, [users, books]);
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        setStats(mockStats);
-      } catch (err) {
-        setError('Failed to fetch dashboard statistics');
-        console.error('Error fetching stats:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
-
-  return { stats, isLoading, error };
-};
+  return { stats, isLoading };
+}

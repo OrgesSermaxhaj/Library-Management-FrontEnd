@@ -14,11 +14,8 @@ import NotFound from "./pages/NotFound";
 
 // Admin dashboard routes
 import AdminDashboard from "./pages/Admin/Dashboard";
-<<<<<<< HEAD
 import AdminAnnouncements from "./pages/Admin/Announcements";
-=======
 import UserManagement from "./pages/Admin/UserManagement";
->>>>>>> 5d133f1d80943c55bb34ece236ce64b33b213c27
 
 // Member dashboard routes
 import MemberDashboard from "./pages/Member/Dashboard";

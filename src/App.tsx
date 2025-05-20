@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 
 // Admin dashboard routes
 import AdminDashboard from "./pages/Admin/Dashboard";
+import AdminAnnouncements from "./pages/Admin/Announcements";
 
 // Member dashboard routes
 import MemberDashboard from "./pages/Member/Dashboard";
@@ -105,7 +106,7 @@ const App = () => (
           } />
           <Route path="/admin/announcements" element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <Dashboard />
+              <AdminAnnouncements />
             </ProtectedRoute>
           } />
           

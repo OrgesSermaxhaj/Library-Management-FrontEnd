@@ -1,49 +1,27 @@
-
 import { useState, useEffect } from "react";
+import { announcementService, type Announcement } from "@/services/announcements";
 
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  date: string;
-  author: string;
-}
-
-export function useAnnouncements() {
+export const useAnnouncements = () => {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Simulate API fetch
-    const timer = setTimeout(() => {
-      setAnnouncements([
-        {
-          id: "a1",
-          title: "System Maintenance",
-          content: "The system will be undergoing maintenance this weekend. Please expect some downtime between 2-4 AM.",
-          date: "Today, 10:23 AM",
-          author: "System Admin",
-        },
-        {
-          id: "a2",
-          title: "New Book Collection",
-          content: "The new collection of science fiction books has arrived and is ready for processing.",
-          date: "Yesterday, 3:45 PM",
-          author: "Collection Manager",
-        },
-        {
-          id: "a3",
-          title: "Staff Meeting",
-          content: "Reminder: Monthly staff meeting this Friday at 2 PM in the conference room.",
-          date: "May 15, 2025",
-          author: "HR Department",
-        },
-      ]);
-      setIsLoading(false);
-    }, 1300);
+    const fetchAnnouncements = async () => {
+      try {
+        setIsLoading(true);
+        const data = await announcementService.getAllAnnouncements();
+        setAnnouncements(data);
+      } catch (error) {
+        console.error("Error fetching announcements:", error);
+        setError(error instanceof Error ? error.message : "Failed to fetch announcements");
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
+    fetchAnnouncements();
   }, []);
 
-  return { announcements, isLoading };
-}
+  return { announcements, isLoading, error };
+};

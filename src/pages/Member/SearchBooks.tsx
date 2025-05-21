@@ -1,17 +1,27 @@
 import { useState } from 'react';
 import { useBooks } from '@/hooks/useBooks';
+import { useReservations } from '@/hooks/useReservations';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Book, Search, Filter } from 'lucide-react';
+import { toast } from 'sonner';
+
+const MAX_RESERVATIONS = 5;
 
 export default function SearchBooks() {
   const { books, authors, categories, publishers, isLoading, error } = useBooks();
+  const { 
+    createReservation, 
+    isLoading: isReserving, 
+    activeReservationsCount 
+  } = useReservations();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAuthor, setSelectedAuthor] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPublisher, setSelectedPublisher] = useState<string>('all');
+  const [reservingBookId, setReservingBookId] = useState<number | null>(null);
 
   // Helper function to get author name by ID
   const getAuthorName = (authorId: number) => {
@@ -26,6 +36,18 @@ export default function SearchBooks() {
   // Helper function to get publisher name by ID
   const getPublisherName = (publisherId: number) => {
     return publishers.find(p => p.id === publisherId)?.name || 'Unknown Publisher';
+  };
+
+  // Handle reservation
+  const handleReserve = async (bookId: number) => {
+    try {
+      setReservingBookId(bookId);
+      await createReservation(bookId);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to reserve book');
+    } finally {
+      setReservingBookId(null);
+    }
   };
 
   // Filter books based on search term and filters
@@ -47,7 +69,12 @@ export default function SearchBooks() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8">Browse Books</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold">Browse Books</h1>
+        <div className="text-sm text-gray-500">
+          Active Reservations: {activeReservationsCount}/{MAX_RESERVATIONS}
+        </div>
+      </div>
       
       {/* Search and Filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -143,9 +170,23 @@ export default function SearchBooks() {
                   </p>
                   <Button 
                     className="w-full"
-                    disabled={book.quantity === 0}
+                    disabled={
+                      book.quantity === 0 || 
+                      isReserving || 
+                      reservingBookId === book.id ||
+                      activeReservationsCount >= MAX_RESERVATIONS
+                    }
+                    onClick={() => handleReserve(book.id)}
                   >
-                    {book.quantity === 0 ? 'Not Available' : 'Reserve'}
+                    {isReserving && reservingBookId === book.id ? (
+                      'Reserving...'
+                    ) : book.quantity === 0 ? (
+                      'Not Available'
+                    ) : activeReservationsCount >= MAX_RESERVATIONS ? (
+                      'Reservation Limit Reached'
+                    ) : (
+                      'Reserve'
+                    )}
                   </Button>
                 </div>
               </CardContent>

@@ -4,10 +4,12 @@ import { useReservations } from '@/hooks/useReservations';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { format } from 'date-fns';
+import { format, isValid, parseISO } from 'date-fns';
 import { toast } from 'sonner';
 import MemberLayout from "@/components/layout/MemberLayout";
 import FinesHistoryCard from "@/components/dashboard/FinesHistoryCard";
+import { Loan } from '@/services/loans';
+import { Reservation } from '@/services/reservations';
 
 const MemberDashboard = () => {
   const { user } = useAuth();
@@ -23,7 +25,7 @@ const MemberDashboard = () => {
     isLoading: reservationsLoading, 
     error: reservationsError,
     cancelReservation 
-  } = useReservations(user?.id);
+  } = useReservations();
 
   const handleReturn = async (loanId: string) => {
     try {
@@ -34,12 +36,23 @@ const MemberDashboard = () => {
     }
   };
 
-  const handleCancel = async (reservationId: string) => {
+  const handleCancel = async (reservationId: number) => {
     try {
       await cancelReservation(reservationId);
       toast.success('Reservation cancelled successfully');
     } catch (error) {
       toast.error('Failed to cancel reservation');
+    }
+  };
+
+  const formatDate = (dateString: string | undefined | null) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = parseISO(dateString);
+      return isValid(date) ? format(date, 'MMM d, yyyy') : 'Invalid Date';
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
     }
   };
 
@@ -70,11 +83,11 @@ const MemberDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {activeLoans.map((loan) => (
+                  {activeLoans.map((loan: Loan) => (
                     <div key={loan.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <h3 className="font-medium">{loan.title}</h3>
-                        <p className="text-sm text-gray-500">Due: {format(new Date(loan.dueDate), 'MMM d, yyyy')}</p>
+                        <p className="text-sm text-gray-500">Due: {formatDate(loan.dueDate)}</p>
                       </div>
                       <Button 
                         variant="outline" 
@@ -110,20 +123,27 @@ const MemberDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {reservations.map((reservation) => (
+                  {reservations.map((reservation: Reservation) => (
                     <div key={reservation.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <h3 className="font-medium">{reservation.title}</h3>
                         <p className="text-sm text-gray-500">
-                          Expires: {format(new Date(reservation.expiryDate), 'MMM d, yyyy')}
+                          Status: {reservation.status}
                         </p>
+                        {reservation.dueDate && (
+                          <p className="text-sm text-gray-500">
+                            Due: {formatDate(reservation.dueDate)}
+                          </p>
+                        )}
                       </div>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => handleCancel(reservation.id)}
-                      >
-                        Cancel
-                      </Button>
+                      {reservation.status === 'PENDING' && (
+                        <Button 
+                          variant="outline" 
+                          onClick={() => handleCancel(Number(reservation.id))}
+                        >
+                          Cancel
+                        </Button>
+                      )}
                     </div>
                   ))}
                 </div>

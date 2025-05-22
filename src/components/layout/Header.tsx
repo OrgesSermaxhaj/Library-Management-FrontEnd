@@ -11,16 +11,21 @@ import { useTheme } from "@/hooks/useTheme";
 import { Sun, Moon, User, LogOut, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCallback } from "react";
 
 const Header = () => {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     navigate('/login');
-  };
+  }, [logout, navigate]);
+
+  const handleThemeToggle = useCallback(() => {
+    toggleTheme();
+  }, [toggleTheme]);
   
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-4 px-6">
@@ -38,7 +43,7 @@ const Header = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={toggleTheme}
+            onClick={handleThemeToggle}
             aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
             {theme === "dark" ? (
@@ -53,14 +58,14 @@ const Header = () => {
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-                  <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
+                  <AvatarFallback>{user?.fullName?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1 leading-none">
-                  <p className="font-medium">{user?.name || 'User'}</p>
+                  <p className="font-medium">{user?.fullName || 'User'}</p>
                   <p className="text-sm text-muted-foreground">{user?.email || 'user@example.com'}</p>
                 </div>
               </div>

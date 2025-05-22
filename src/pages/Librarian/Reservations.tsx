@@ -29,38 +29,17 @@ const Reservations = () => {
   // Update reservation status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ reservationId, status }: { reservationId: number; status: ReservationStatus }) => {
-      const updatedReservation = await reservationService.updateReservationStatus(reservationId, status);
-      
-      // If the reservation is approved, create a loan
-      if (status === 'APPROVED') {
-        try {
-          // Check if a loan already exists for this reservation
-          const activeLoans = await loanService.getActiveLoans();
-          const existingLoan = activeLoans.find(loan => 
-            loan.bookId === updatedReservation.bookId && 
-            loan.userId === updatedReservation.userId
-          );
-          
-          if (!existingLoan) {
-            await loanService.createLoanFromReservation(reservationId);
-          }
-        } catch (error) {
-          console.error('Error creating loan:', error);
-          throw error;
-        }
-      }
-      
-      return updatedReservation;
+      // Only update the reservation status, do not create a loan here
+      return await reservationService.updateReservationStatus(reservationId, status);
     },
     onSuccess: (_, variables) => {
       // Invalidate both reservations and loans queries to ensure UI is updated
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       queryClient.invalidateQueries({ queryKey: ['activeLoans'] });
       queryClient.invalidateQueries({ queryKey: ['books'] });
-      
       // Show appropriate success message based on the new status
       if (variables.status === 'APPROVED') {
-        toast.success('Reservation approved and loan created successfully');
+        toast.success('Reservation approved and ready for pickup');
       } else if (variables.status === 'REJECTED') {
         toast.success('Reservation rejected');
       } else if (variables.status === 'CANCELLED') {
@@ -90,14 +69,16 @@ const Reservations = () => {
     }
   });
 
+  // Only show reservations that need action (PENDING or APPROVED)
   const filteredReservations = reservations.filter(reservation => {
-    const matchesSearch = reservation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         reservation.userFullName.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || 
-                         (reservation.status && reservation.status.toUpperCase() === statusFilter.toUpperCase());
-    
-    return matchesSearch && matchesStatus;
+    const status = reservation.status?.toUpperCase();
+    if (status === 'PENDING' || status === 'APPROVED') {
+      const matchesSearch = reservation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        reservation.userFullName.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === "all" || (reservation.status && reservation.status.toUpperCase() === statusFilter.toUpperCase());
+      return matchesSearch && matchesStatus;
+    }
+    return false;
   });
 
   const getStatusBadge = (status: string) => {

@@ -12,7 +12,7 @@ export interface Reservation {
   status: string;
 }
 
-export type ReservationStatus = 'PENDING' | 'APPROVED' | 'CANCELLED' | 'REJECTED' | 'COMPLETED';
+export type ReservationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'COMPLETED';
 
 export const reservationService = {
   // Get all reservations for the current user
@@ -23,95 +23,53 @@ export const reservationService = {
 
   // Create a new reservation
   async createReservation(bookId: number): Promise<Reservation> {
-    console.log('Creating reservation for bookId:', bookId);
-    try {
-      // Get the current user's ID from the stored user object
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser) {
-        throw new Error('User not found');
-      }
-
-      const user = JSON.parse(storedUser);
-      if (!user.id) {
-        throw new Error('User ID not found');
-      }
-
-      // Create the reservation DTO matching the backend's structure
-      const reservationDto = {
-        bookId: bookId,
-        userId: user.id,
-        loanDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 14 days from now
-        returned: false,
-        status: 'PENDING'
-      };
-
-      console.log('Sending reservation DTO:', reservationDto);
-      const response = await api.post('/reservations', reservationDto);
-      console.log('Reservation response:', response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error('Error creating reservation:', error);
-      throw error;
+    // Only check availability using /check/{bookId}
+    const isAvailable = await this.checkAvailability(bookId);
+    if (!isAvailable) {
+      throw new Error('This book is no longer available');
     }
+
+    const response = await api.post('/reservations', {
+      bookId,
+      loanDate: new Date().toISOString().split('T')[0],
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      returned: false,
+      status: 'PENDING'
+    });
+    return response.data;
   },
 
   // Cancel a reservation
-  async cancelReservation(id: number): Promise<void> {
-    await api.delete(`/reservations/${id}`);
+  async cancelReservation(reservationId: number): Promise<void> {
+    await api.delete(`/reservations/${reservationId}`);
   },
 
-  // Update reservation status
-  async updateReservationStatus(reservationId: string, status: ReservationStatus): Promise<void> {
-    console.log('Sending update request:', { reservationId, status });
-    try {
-      const url = `/reservations/${reservationId}/status?status=${encodeURIComponent(status)}`;
-      
-      // Log the full request details
-      console.log('Request details:', {
-        url,
-        method: 'PATCH',
-        status,
-        token: localStorage.getItem('token'),
-        tenantId: localStorage.getItem('tenantId')
-      });
-
-      // Send the request with explicit method
-      const response = await api({
-        method: 'PATCH',
-        url,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      console.log('Update response:', response.data);
-      return response.data;
-    } catch (error: any) {
-      console.error('Status update error:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-        headers: error.response?.headers,
-        request: {
-          url: error.config?.url,
-          method: error.config?.method,
-          headers: error.config?.headers
-        }
-      });
-      throw error;
-    }
+  // Update reservation status (for librarians)
+  async updateReservationStatus(reservationId: number, status: ReservationStatus): Promise<Reservation> {
+    const response = await api.patch(`/reservations/${reservationId}/status?status=${status}`);
+    return response.data;
   },
 
-  // Check book availability
+  // Check book availability using only /check/{bookId}
   async checkAvailability(bookId: number): Promise<boolean> {
-    const response = await api.get(`/reservations/check/${bookId}`);
-    return response.data.available;
+    try {
+      const response = await api.get(`/reservations/check/${bookId}`);
+      return response.data.available;
+    } catch (error) {
+      console.error('Error checking book availability:', error);
+      return false;
+    }
   },
 
   // Get user's active reservations count
   async getUserActiveReservationsCount(): Promise<number> {
     const response = await api.get('/reservations/count/active');
     return response.data.count;
+  },
+
+  // Confirm pickup (librarian marks reservation as picked up)
+  async confirmPickup(reservationId: number): Promise<any> {
+    const response = await api.patch(`/reservations/${reservationId}/pickup`);
+    return response.data;
   }
 };

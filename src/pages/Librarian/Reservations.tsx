@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { reservationService, ReservationStatus, Reservation } from "@/services/reservations";
+import { loanService } from "@/services/loans";
 import { toast } from "sonner";
 import { format, isValid, parseISO } from "date-fns";
 
@@ -28,38 +29,71 @@ const Reservations = () => {
   // Update reservation status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ reservationId, status }: { reservationId: number; status: ReservationStatus }) => {
-      return await reservationService.updateReservationStatus(reservationId.toString(), status);
+      const updatedReservation = await reservationService.updateReservationStatus(reservationId, status);
+      
+      // If the reservation is approved, create a loan
+      if (status === 'APPROVED') {
+        try {
+          // Check if a loan already exists for this reservation
+          const activeLoans = await loanService.getActiveLoans();
+          const existingLoan = activeLoans.find(loan => 
+            loan.bookId === updatedReservation.bookId && 
+            loan.userId === updatedReservation.userId
+          );
+          
+          if (!existingLoan) {
+            await loanService.createLoanFromReservation(reservationId);
+          }
+        } catch (error) {
+          console.error('Error creating loan:', error);
+          throw error;
+        }
+      }
+      
+      return updatedReservation;
     },
     onSuccess: (_, variables) => {
-      // Invalidate both reservations and books queries to ensure UI is updated
+      // Invalidate both reservations and loans queries to ensure UI is updated
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['activeLoans'] });
       queryClient.invalidateQueries({ queryKey: ['books'] });
       
       // Show appropriate success message based on the new status
       if (variables.status === 'APPROVED') {
-        toast.success('Reservation approved. Book quantity has been updated.');
+        toast.success('Reservation approved and loan created successfully');
       } else if (variables.status === 'REJECTED') {
-        toast.success('Reservation rejected.');
+        toast.success('Reservation rejected');
       } else if (variables.status === 'CANCELLED') {
-        toast.success('Reservation cancelled.');
+        toast.success('Reservation cancelled');
       } else {
         toast.success('Reservation status updated successfully');
       }
     },
     onError: (error: any) => {
       console.error('Update status error:', error);
-      toast.error(error.message || 'Failed to update reservation status');
+      toast.error(error.response?.data?.message || 'Failed to update reservation status');
     }
   });
 
-  const filteredReservations = (reservations as Reservation[]).filter(reservation => {
-    if (!reservation) return false;
+  // Confirm pickup mutation
+  const confirmPickupMutation = useMutation({
+    mutationFn: async (reservationId: number) => {
+      return await reservationService.confirmPickup(reservationId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
+      queryClient.invalidateQueries({ queryKey: ['activeLoans'] });
+      toast.success('Book pickup confirmed and loan created!');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to confirm pickup');
+    }
+  });
+
+  const filteredReservations = reservations.filter(reservation => {
+    const matchesSearch = reservation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         reservation.userFullName.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const title = reservation.title?.toLowerCase() || '';
-    const userFullName = reservation.userFullName?.toLowerCase() || '';
-    const searchLower = searchQuery.toLowerCase();
-    
-    const matchesSearch = title.includes(searchLower) || userFullName.includes(searchLower);
     const matchesStatus = statusFilter === "all" || 
                          (reservation.status && reservation.status.toUpperCase() === statusFilter.toUpperCase());
     
@@ -124,10 +158,17 @@ const Reservations = () => {
             </Button>
           </div>
         );
-
       case "APPROVED":
         return (
           <div className="flex gap-2 justify-end">
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => confirmPickupMutation.mutate(reservation.id)}
+              disabled={confirmPickupMutation.isPending}
+            >
+              {confirmPickupMutation.isPending ? 'Confirming...' : 'Confirm Pickup'}
+            </Button>
             <Button 
               variant="destructive" 
               size="sm"
@@ -138,7 +179,6 @@ const Reservations = () => {
             </Button>
           </div>
         );
-
       case "CANCELLED":
       case "REJECTED":
         return (
@@ -153,7 +193,6 @@ const Reservations = () => {
             </Button>
           </div>
         );
-
       default:
         return null;
     }
@@ -223,44 +262,42 @@ const Reservations = () => {
               </Select>
             </div>
 
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Book</TableHead>
+                  <TableHead>Author</TableHead>
+                  <TableHead>Member</TableHead>
+                  <TableHead>Reservation Date</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredReservations.length === 0 ? (
                   <TableRow>
-                    <TableHead>Book</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead>Member</TableHead>
-                    <TableHead>Reservation Date</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      No reservations found
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredReservations.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        No reservations found
+                ) : (
+                  filteredReservations.map((reservation) => (
+                    <TableRow key={reservation.id}>
+                      <TableCell>{reservation.title}</TableCell>
+                      <TableCell>{reservation.authorName}</TableCell>
+                      <TableCell>{reservation.userFullName}</TableCell>
+                      <TableCell>{formatDate(reservation.loanDate)}</TableCell>
+                      <TableCell>{formatDate(reservation.dueDate)}</TableCell>
+                      <TableCell>{getStatusBadge(reservation.status)}</TableCell>
+                      <TableCell className="text-right">
+                        {getActionButton(reservation)}
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    filteredReservations.map((reservation) => (
-                      <TableRow key={reservation.id}>
-                        <TableCell>{reservation.title}</TableCell>
-                        <TableCell>{reservation.authorName}</TableCell>
-                        <TableCell>{reservation.userFullName}</TableCell>
-                        <TableCell>{formatDate(reservation.loanDate)}</TableCell>
-                        <TableCell>{formatDate(reservation.dueDate)}</TableCell>
-                        <TableCell>{getStatusBadge(reservation.status)}</TableCell>
-                        <TableCell className="text-right">
-                          {getActionButton(reservation)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
       </div>

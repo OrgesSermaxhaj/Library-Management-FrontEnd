@@ -1,15 +1,18 @@
 import api from '@/lib/api';
 
 export interface Loan {
-  id: string;
-  bookId: string;
-  title: string;
-  author: string;
-  coverImage?: string;
-  checkoutDate: string;
+  id: number;
+  bookId: number;
+  bookTitle: string;
+  authorName: string;
+  userId: number;
+  userFullName: string;
+  loanDate: string;
   dueDate: string;
   returnDate?: string;
-  status: 'active' | 'overdue' | 'returned' | 'late';
+  returned: boolean;
+  status: 'ACTIVE' | 'RETURNED';
+  returnStatus: 'ON_TIME' | 'LATE' | 'PENDING';
 }
 
 // Define the reservation status type to match backend enum
@@ -29,21 +32,22 @@ export interface Reservation {
 }
 
 export const loanService = {
-  // Get active loans for the current user
+  // Get active loans
   async getActiveLoans(): Promise<Loan[]> {
     const response = await api.get('/loans/active');
     return response.data;
   },
 
-  // Get loan history for the current user
+  // Get loan history
   async getLoanHistory(): Promise<Loan[]> {
     const response = await api.get('/loans/history');
     return response.data;
   },
 
   // Return a book
-  async returnBook(loanId: string): Promise<void> {
-    await api.post(`/loans/${loanId}/return`);
+  async returnLoan(loanId: number): Promise<Loan> {
+    const response = await api.put(`/loans/${loanId}/return`);
+    return response.data;
   },
 
   // Get active reservations for the current user
@@ -124,5 +128,11 @@ export const loanService = {
       });
       throw error;
     }
+  },
+
+  // Create a loan from a reservation
+  async createLoanFromReservation(reservationId: number): Promise<Loan> {
+    const response = await api.post(`/loans/from-reservation/${reservationId}`);
+    return response.data;
   }
 }; 

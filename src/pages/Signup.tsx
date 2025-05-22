@@ -17,6 +17,8 @@ interface SignupValues {
   password: string;
   confirmPassword: string;
   tenantId: string;
+  address: string;
+  phoneNumber: string;
 }
 
 const signupSchema = Yup.object().shape({
@@ -29,6 +31,8 @@ const signupSchema = Yup.object().shape({
     .oneOf([Yup.ref('password')], 'Passwords must match')
     .required('Confirm password is required'),
   tenantId: Yup.string().required('Tenant ID is required'),
+  address: Yup.string().required('Address is required'),
+  phoneNumber: Yup.string().required('Phone number is required'),
 });
 
 const Signup = () => {
@@ -54,6 +58,8 @@ const Signup = () => {
               password: '',
               confirmPassword: '',
               tenantId: '',
+              address: '',
+              phoneNumber: '',
             }}
             validationSchema={signupSchema}
             onSubmit={async (values: SignupValues, { setSubmitting }) => {
@@ -70,13 +76,25 @@ const Signup = () => {
                   fullName: values.name,
                   email: values.email,
                   tenantId: values.tenantId,
+                  address: values.address,
+                  phoneNumber: values.phoneNumber,
                 });
 
-                const res = await api.post('/auth/register', {
-                  fullName: values.name,
-                  email: values.email,
-                  password: values.password,
-                });
+                const res = await api.post('/auth/register', 
+                  {
+                    fullName: values.name,
+                    email: values.email,
+                    password: values.password,
+                    address: values.address,
+                    phoneNumber: values.phoneNumber
+                  },
+                  {
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-Tenant-ID': values.tenantId
+                    }
+                  }
+                );
                 
                 console.log('Registration response:', res.data);
                 
@@ -165,6 +183,32 @@ const Signup = () => {
                   />
                   {errors.email && touched.email && (
                     <div className="text-sm text-red-500">{errors.email}</div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Field
+                    as={Input}
+                    id="address"
+                    name="address"
+                    placeholder="Enter your address"
+                  />
+                  {errors.address && touched.address && (
+                    <div className="text-sm text-red-500">{errors.address}</div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Field
+                    as={Input}
+                    id="phoneNumber"
+                    name="phoneNumber"
+                    placeholder="Enter your phone number"
+                  />
+                  {errors.phoneNumber && touched.phoneNumber && (
+                    <div className="text-sm text-red-500">{errors.phoneNumber}</div>
                   )}
                 </div>
 

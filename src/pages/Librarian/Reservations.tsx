@@ -95,7 +95,7 @@ const Reservations = () => {
                          reservation.userFullName.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || 
-                         reservation.status.toUpperCase() === statusFilter.toUpperCase();
+                         (reservation.status && reservation.status.toUpperCase() === statusFilter.toUpperCase());
     
     return matchesSearch && matchesStatus;
   });

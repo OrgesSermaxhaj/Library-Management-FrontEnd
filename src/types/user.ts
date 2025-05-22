@@ -10,7 +10,10 @@ export interface User {
   email: string;
   password?: string;
   role: UserRole;
-  extraField1?: string;
-  extraField2?: string;
+  address: string;
+  phoneNumber: string;
+  adminCode?: string;
+  department?: string;
+  employeeNumber?: string;
   version: number;
 } 

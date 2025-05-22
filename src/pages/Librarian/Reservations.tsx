@@ -53,11 +53,15 @@ const Reservations = () => {
   });
 
   const filteredReservations = (reservations as Reservation[]).filter(reservation => {
-    const matchesSearch = reservation.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         reservation.userFullName.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!reservation) return false;
     
+    const title = reservation.title?.toLowerCase() || '';
+    const userFullName = reservation.userFullName?.toLowerCase() || '';
+    const searchLower = searchQuery.toLowerCase();
+    
+    const matchesSearch = title.includes(searchLower) || userFullName.includes(searchLower);
     const matchesStatus = statusFilter === "all" || 
-                         reservation.status.toUpperCase() === statusFilter.toUpperCase();
+                         (reservation.status && reservation.status.toUpperCase() === statusFilter.toUpperCase());
     
     return matchesSearch && matchesStatus;
   });

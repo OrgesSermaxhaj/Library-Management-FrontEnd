@@ -35,22 +35,22 @@ const AdminDashboard = () => {
         
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <StatsCard
-            title="Total Users"
+              <StatsCard
+                title="Total Users"
             value={stats?.totalUsers || 0}
-            icon={Users}
+                icon={Users}
             isLoading={statsLoading}
             className="h-[200px]"
-          />
-          <StatsCard
-            title="Total Books"
+              />
+              <StatsCard
+                title="Total Books"
             value={stats?.totalBooks || 0}
-            icon={BookOpen}
+                icon={BookOpen}
             isLoading={statsLoading}
             className="h-[200px]"
           />
         </div>
-
+        
         {/* Management Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* User Management Card */}
@@ -64,17 +64,17 @@ const AdminDashboard = () => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Manage library members, roles, and permissions
                   </p>
-                </div>
+            </div>
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-full group-hover:scale-110 transition-transform">
                   <UserCog className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
+                      </div>
+                    </div>
               <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
                 <span className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />
                   {stats?.activeMembers || 0} Active Members
                 </span>
-              </div>
+                      </div>
             </CardContent>
           </Card>
 
@@ -89,20 +89,20 @@ const AdminDashboard = () => {
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Manage library inventory, categories, and availability
                   </p>
-                </div>
+                      </div>
                 <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-full group-hover:scale-110 transition-transform">
                   <Library className="h-8 w-8 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
+                      </div>
+                    </div>
               <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
                 <span className="flex items-center">
                   <BookOpen className="h-4 w-4 mr-1" />
                   {stats?.totalBooks || 0} Total Books
                 </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
         {/* Announcements Section */}
         <Card>
@@ -141,10 +141,10 @@ const AdminDashboard = () => {
                       {formatDate(announcement.publishDate)}
                     </p>
                     <p className="text-sm text-gray-700 dark:text-gray-300">{announcement.content}</p>
-                  </div>
+          </div>
                 ))}
-              </div>
-            )}
+          </div>
+        )}
           </CardContent>
         </Card>
       </div>

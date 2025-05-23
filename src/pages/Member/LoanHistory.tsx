@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import MemberLayout from "@/components/layout/MemberLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,31 +6,44 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search, BookOpen, RotateCcw } from "lucide-react";
-
-const currentLoans = [
-  { id: "1", book: "The Great Gatsby", checkoutDate: "2023-05-10", dueDate: "2023-05-24", status: "active" },
-  { id: "2", book: "To Kill a Mockingbird", checkoutDate: "2023-05-15", dueDate: "2023-05-29", status: "overdue" },
-  { id: "3", book: "1984", checkoutDate: "2023-05-18", dueDate: "2023-06-01", status: "active" },
-];
-
-const pastLoans = [
-  { id: "101", book: "Harry Potter and the Philosopher's Stone", checkoutDate: "2023-04-01", returnDate: "2023-04-15", status: "returned" },
-  { id: "102", book: "The Hobbit", checkoutDate: "2023-04-05", returnDate: "2023-04-19", status: "returned" },
-  { id: "103", book: "The Lord of the Rings", checkoutDate: "2023-04-10", returnDate: "2023-04-22", status: "late" },
-  { id: "104", book: "The Alchemist", checkoutDate: "2023-03-15", returnDate: "2023-03-29", status: "returned" },
-  { id: "105", book: "The Da Vinci Code", checkoutDate: "2023-03-20", returnDate: "2023-04-05", status: "late" },
-];
+import { useMemberLoanHistory } from "@/hooks/useMemberLoanHistory";
+import { format, parseISO } from "date-fns";
 
 const LoanHistory = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { activeLoans, loanHistory, isLoading, error } = useMemberLoanHistory();
   
-  const filteredCurrentLoans = currentLoans.filter(loan => 
-    loan.book.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredActiveLoans = activeLoans.filter(loan => 
+    loan.bookTitle.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const filteredPastLoans = pastLoans.filter(loan => 
-    loan.book.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredLoanHistory = loanHistory.filter(loan => 
+    loan.bookTitle.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(parseISO(dateString), 'MMM dd, yyyy');
+    } catch (error) {
+      return 'Invalid Date';
+    }
+  };
+
+  const getStatusBadge = (loan: any) => {
+    if (loan.status === 'ACTIVE') {
+      return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">Active</Badge>;
+    }
+    
+    if (loan.returnStatus === 'ON_TIME') {
+      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">Returned On Time</Badge>;
+    }
+    
+    if (loan.returnStatus === 'LATE') {
+      return <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300">Returned Late</Badge>;
+    }
+    
+    return <Badge>{loan.returnStatus}</Badge>;
+  };
 
   return (
     <MemberLayout>
@@ -48,15 +60,15 @@ const LoanHistory = () => {
           />
         </div>
 
-        <Tabs defaultValue="current" className="space-y-4">
+        <Tabs defaultValue="current">
           <TabsList>
             <TabsTrigger value="current" className="flex items-center gap-2">
               <BookOpen className="h-4 w-4" />
-              Current Loans ({filteredCurrentLoans.length})
+              Current Loans ({filteredActiveLoans.length})
             </TabsTrigger>
             <TabsTrigger value="past" className="flex items-center gap-2">
               <RotateCcw className="h-4 w-4" />
-              Past Loans ({filteredPastLoans.length})
+              Past Loans ({filteredLoanHistory.length})
             </TabsTrigger>
           </TabsList>
           
@@ -66,7 +78,15 @@ const LoanHistory = () => {
                 <CardTitle className="text-lg font-medium">Books Currently Borrowed</CardTitle>
               </CardHeader>
               <CardContent>
-                {filteredCurrentLoans.length === 0 ? (
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-10 text-red-500">
+                    {error.toString()}
+                  </div>
+                ) : filteredActiveLoans.length === 0 ? (
                   <div className="text-center py-10 text-muted-foreground">
                     You have no current loans matching your search
                   </div>
@@ -81,17 +101,12 @@ const LoanHistory = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredCurrentLoans.map((loan) => (
+                      {filteredActiveLoans.map((loan) => (
                         <TableRow key={loan.id}>
-                          <TableCell className="font-medium">{loan.book}</TableCell>
-                          <TableCell>{loan.checkoutDate}</TableCell>
-                          <TableCell>{loan.dueDate}</TableCell>
-                          <TableCell>
-                            <Badge 
-                              className={loan.status === "overdue" ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"}>
-                              {loan.status === "overdue" ? "Overdue" : "Active"}
-                            </Badge>
-                          </TableCell>
+                          <TableCell className="font-medium">{loan.bookTitle}</TableCell>
+                          <TableCell>{formatDate(loan.loanDate)}</TableCell>
+                          <TableCell>{formatDate(loan.dueDate)}</TableCell>
+                          <TableCell>{getStatusBadge(loan)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -107,7 +122,15 @@ const LoanHistory = () => {
                 <CardTitle className="text-lg font-medium">Previously Borrowed Books</CardTitle>
               </CardHeader>
               <CardContent>
-                {filteredPastLoans.length === 0 ? (
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-10 text-red-500">
+                    {error.toString()}
+                  </div>
+                ) : filteredLoanHistory.length === 0 ? (
                   <div className="text-center py-10 text-muted-foreground">
                     You have no past loans matching your search
                   </div>
@@ -117,22 +140,19 @@ const LoanHistory = () => {
                       <TableRow>
                         <TableHead>Book Title</TableHead>
                         <TableHead>Checkout Date</TableHead>
+                        <TableHead>Due Date</TableHead>
                         <TableHead>Return Date</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredPastLoans.map((loan) => (
+                      {filteredLoanHistory.map((loan) => (
                         <TableRow key={loan.id}>
-                          <TableCell className="font-medium">{loan.book}</TableCell>
-                          <TableCell>{loan.checkoutDate}</TableCell>
-                          <TableCell>{loan.returnDate}</TableCell>
-                          <TableCell>
-                            <Badge 
-                              className={loan.status === "late" ? "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300" : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"}>
-                              {loan.status === "late" ? "Returned Late" : "Returned On Time"}
-                            </Badge>
-                          </TableCell>
+                          <TableCell className="font-medium">{loan.bookTitle}</TableCell>
+                          <TableCell>{formatDate(loan.loanDate)}</TableCell>
+                          <TableCell>{formatDate(loan.dueDate)}</TableCell>
+                          <TableCell>{loan.returnDate ? formatDate(loan.returnDate) : 'N/A'}</TableCell>
+                          <TableCell>{getStatusBadge(loan)}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

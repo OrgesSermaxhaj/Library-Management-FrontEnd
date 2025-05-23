@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MemberLayout from "@/components/layout/MemberLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,15 +8,70 @@ import { Textarea } from "@/components/ui/textarea";
 import { Rating } from "@/components/reviews/Rating";
 import { useReviews } from "@/hooks/useReviews";
 import { BookReview } from "@/components/reviews/BookReview";
+import { useAuth } from "@/contexts/AuthContext";
+import { v4 as uuidv4 } from 'uuid';
+import api from "@/lib/api";
 
 const Reviews = () => {
-  const { myReviews, popularReviews } = useReviews();
+  const { myReviews, popularReviews, addReview } = useReviews();
+  const { user } = useAuth();
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(0);
   const [activeTab, setActiveTab] = useState("my-reviews");
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+  };
+
+  const [books, setBooks] = useState<{ id: number; title: string; author: string }[]>([]);
+
+  useEffect(() => {
+    // Fetch books from the backend
+    const fetchBooks = async () => {
+      try {
+        const response = await api.get('/books');
+        setBooks(response.data);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+      }
+    };
+    fetchBooks();
+  }, []);
+
+  const handleSubmitReview = async () => {
+    if (!reviewText.trim() || rating === 0) {
+      alert('Please provide both a review text and a rating');
+      return;
+    }
+
+    try {
+      // Get the selected book from the dropdown
+      const bookSelect = document.querySelector('select') as HTMLSelectElement;
+      const selectedBook = bookSelect.value;
+      const selectedBookObj = books.find(b => `${b.title} by ${b.author}` === selectedBook);
+      
+      if (!selectedBookObj) {
+        alert('Please select a valid book');
+        return;
+      }
+
+      // Create the review object
+      const review = {
+        bookId: selectedBookObj.id,
+        userId: user?.id || 0,
+        comment: reviewText,
+        rating: rating
+      };
+
+      // Submit the review
+      await addReview(review);
+      setReviewText('');
+      setRating(0);
+      setActiveTab('my-reviews');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Failed to submit review. Please try again.');
+    }
   };
 
   return (
@@ -71,10 +126,12 @@ const Reviews = () => {
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Select a Book</label>
                   <select className="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-700">
-                    <option>-- Select a recently borrowed book --</option>
-                    <option>The Great Gatsby by F. Scott Fitzgerald</option>
-                    <option>To Kill a Mockingbird by Harper Lee</option>
-                    <option>1984 by George Orwell</option>
+                    <option value="">-- Select a book --</option>
+                    {books.map((book) => (
+                      <option key={book.id} value={`${book.title} by ${book.author}`}>
+                        {book.title} by {book.author}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 
@@ -94,7 +151,7 @@ const Reviews = () => {
                 </div>
                 
                 <div className="flex justify-end">
-                  <Button>Submit Review</Button>
+                  <Button onClick={handleSubmitReview}>Submit Review</Button>
                 </div>
               </CardContent>
             </Card>

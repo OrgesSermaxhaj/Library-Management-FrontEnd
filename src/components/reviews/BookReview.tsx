@@ -1,9 +1,11 @@
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Rating } from "@/components/reviews/Rating";
 import { Edit, Trash } from "lucide-react";
-import { Review } from "@/types/review";
+import { Review, Comment } from "@/types/review";
+import api from "@/lib/api";
 
 interface BookReviewProps {
   review: Review;
@@ -11,13 +13,27 @@ interface BookReviewProps {
 }
 
 export const BookReview = ({ review, isEditable = false }: BookReviewProps) => {
+  const [book, setBook] = useState<{ title: string; author: string } | null>(null);
+
+  useEffect(() => {
+    const fetchBook = async () => {
+      try {
+        const response = await api.get(`/books/${review.bookId}`);
+        setBook(response.data);
+      } catch (error) {
+        console.error('Error fetching book:', error);
+      }
+    };
+    fetchBook();
+  }, [review.bookId]);
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-semibold text-lg">{review.bookTitle}</h3>
-            <p className="text-sm text-muted-foreground">{review.author}</p>
+            <h3 className="font-semibold text-lg">{book?.title || 'Loading...'}</h3>
+            <p className="text-sm text-muted-foreground">{book?.author || 'Loading...'}</p>
           </div>
           {isEditable && (
             <div className="flex gap-2">
@@ -38,7 +54,7 @@ export const BookReview = ({ review, isEditable = false }: BookReviewProps) => {
             {review.date}
           </span>
         </div>
-        <p className="text-sm">{review.content}</p>
+        <p className="text-sm">{review.comment}</p>
         
         {review.comments && review.comments.length > 0 && (
           <div className="mt-4 pt-4 border-t dark:border-gray-700">
@@ -46,7 +62,7 @@ export const BookReview = ({ review, isEditable = false }: BookReviewProps) => {
             <div className="space-y-3">
               {review.comments.map((comment, index) => (
                 <div key={index} className="text-xs bg-slate-50 dark:bg-slate-800 p-2 rounded">
-                  <div className="font-medium">{comment.user}</div>
+                  <div className="font-medium">User #{comment.userId}</div>
                   <div>{comment.text}</div>
                 </div>
               ))}

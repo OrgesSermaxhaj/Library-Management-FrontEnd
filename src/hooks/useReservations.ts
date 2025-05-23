@@ -1,17 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reservationService, Reservation, ReservationStatus } from '@/services/reservations';
+import { loanService } from '@/services/loans';
 import { toast } from 'sonner';
 
-const MAX_RESERVATIONS = 5;
+const MAX_TOTAL_ITEMS = 5;
 
 export function useReservations() {
   const queryClient = useQueryClient();
 
   // Get all reservations
-  const { data: reservations = [], isLoading, error } = useQuery<Reservation[]>({
+  const { data: allReservations = [], isLoading, error } = useQuery<Reservation[]>({
     queryKey: ['reservations'],
     queryFn: reservationService.getReservations,
     refetchInterval: 5000 // Refetch every 5 seconds to keep data fresh
+  });
+
+  // Filter out cancelled reservations
+  const reservations = allReservations.filter(r => r.status !== 'CANCELLED');
+
+  // Get active loans
+  const { data: activeLoans = [] } = useQuery({
+    queryKey: ['activeLoans'],
+    queryFn: loanService.getActiveLoans,
   });
 
   // Get current number of active reservations
@@ -21,14 +31,20 @@ export function useReservations() {
     ).length;
   };
 
+  // Get total number of active items (loans + reservations)
+  const getTotalActiveItems = () => {
+    const activeReservations = getActiveReservationsCount();
+    return activeLoans.length + activeReservations;
+  };
+
   // Create a new reservation
   const createReservationMutation = useMutation({
     mutationFn: async (bookId: number) => {
-      // Check if user has reached the maximum number of reservations
-      const activeCount = getActiveReservationsCount();
+      // Check if user has reached the maximum number of total items
+      const totalItems = getTotalActiveItems();
       
-      if (activeCount >= MAX_RESERVATIONS) {
-        throw new Error(`You can only have ${MAX_RESERVATIONS} active reservations at a time. You currently have ${activeCount} active reservations.`);
+      if (totalItems >= MAX_TOTAL_ITEMS) {
+        throw new Error(`You can only have ${MAX_TOTAL_ITEMS} total active items (loans + reservations) at a time. You currently have ${totalItems} items.`);
       }
 
       // Check if the book is available
@@ -67,7 +83,7 @@ export function useReservations() {
   // Update reservation status (for librarians)
   const updateStatusMutation = useMutation({
     mutationFn: async ({ reservationId, status }: { reservationId: number; status: ReservationStatus }) => {
-      return await reservationService.updateReservationStatus(reservationId.toString(), status);
+      return await reservationService.updateReservationStatus(reservationId, status);
     },
     onSuccess: (_, variables) => {
       // Invalidate both reservations and books queries to ensure UI is updated
@@ -101,6 +117,7 @@ export function useReservations() {
     isCreating: createReservationMutation.isPending,
     isCancelling: cancelReservationMutation.isPending,
     isUpdating: updateStatusMutation.isPending,
-    activeReservationsCount: getActiveReservationsCount()
+    activeReservationsCount: getActiveReservationsCount(),
+    totalActiveItems: getTotalActiveItems()
   };
 }

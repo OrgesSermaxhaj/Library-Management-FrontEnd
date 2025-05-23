@@ -11,39 +11,29 @@ import FinesHistoryCard from "@/components/dashboard/FinesHistoryCard";
 import { Loan } from '@/services/loans';
 import { Reservation } from '@/services/reservations';
 
+const MAX_TOTAL_ITEMS = 5;
+
 const MemberDashboard = () => {
   const { user } = useAuth();
   const { 
     loans: activeLoans = [], 
     isLoading: loansLoading, 
-    error: loansError,
-    returnLoan 
+    error: loansError
   } = useActiveLoans(user?.id);
   
   const { 
     reservations = [], 
     isLoading: reservationsLoading, 
-    error: reservationsError,
-    cancelReservation 
+    error: reservationsError
   } = useReservations();
 
-  const handleReturn = async (loanId: string) => {
-    try {
-      await returnLoan(loanId);
-      toast.success('Book returned successfully');
-    } catch (error) {
-      toast.error('Failed to return book');
-    }
-  };
+  // Filter out reservations that have become active loans
+  const activeReservations = reservations.filter(reservation => 
+    !activeLoans.some(loan => loan.bookId === reservation.bookId)
+  );
 
-  const handleCancel = async (reservationId: number) => {
-    try {
-      await cancelReservation(reservationId);
-      toast.success('Reservation cancelled successfully');
-    } catch (error) {
-      toast.error('Failed to cancel reservation');
-    }
-  };
+  // Calculate total items (active loans + reservations)
+  const totalItems = activeLoans.length + activeReservations.length;
 
   const formatDate = (dateString: string | undefined | null) => {
     if (!dateString) return 'N/A';
@@ -86,15 +76,9 @@ const MemberDashboard = () => {
                   {activeLoans.map((loan: Loan) => (
                     <div key={loan.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
-                        <h3 className="font-medium">{loan.title}</h3>
+                        <h3 className="font-medium">{loan.bookTitle}</h3>
                         <p className="text-sm text-gray-500">Due: {formatDate(loan.dueDate)}</p>
                       </div>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => handleReturn(loan.id)}
-                      >
-                        Return
-                      </Button>
                     </div>
                   ))}
                 </div>
@@ -114,7 +98,7 @@ const MemberDashboard = () => {
                 </div>
               ) : reservationsError ? (
                 <div className="text-red-500">Failed to load reservations</div>
-              ) : reservations.length === 0 ? (
+              ) : activeReservations.length === 0 ? (
                 <div className="text-center py-4">
                   <p className="text-gray-500 mb-4">No active reservations</p>
                   <Button asChild>
@@ -123,27 +107,17 @@ const MemberDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {reservations.map((reservation: Reservation) => (
+                  {activeReservations.map((reservation: Reservation) => (
                     <div key={reservation.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
                         <h3 className="font-medium">{reservation.title}</h3>
-                        <p className="text-sm text-gray-500">
-                          Status: {reservation.status}
-                        </p>
+                        <p className="text-sm text-gray-500">Status: {reservation.status}</p>
                         {reservation.dueDate && (
                           <p className="text-sm text-gray-500">
                             Due: {formatDate(reservation.dueDate)}
                           </p>
                         )}
                       </div>
-                      {reservation.status === 'PENDING' && (
-                        <Button 
-                          variant="outline" 
-                          onClick={() => handleCancel(Number(reservation.id))}
-                        >
-                          Cancel
-                        </Button>
-                      )}
                     </div>
                   ))}
                 </div>

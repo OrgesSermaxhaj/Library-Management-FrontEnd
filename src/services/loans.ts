@@ -13,6 +13,7 @@ export interface Loan {
   returned: boolean;
   status: 'ACTIVE' | 'RETURNED';
   returnStatus: 'ON_TIME' | 'LATE' | 'PENDING';
+  reservationId?: number;
 }
 
 // Define the reservation status type to match backend enum
@@ -46,8 +47,28 @@ export const loanService = {
 
   // Return a book
   async returnLoan(loanId: number): Promise<Loan> {
-    const response = await api.put(`/loans/${loanId}/return`);
-    return response.data;
+    try {
+      // Return the book
+      const response = await api.put(`/loans/${loanId}/return`);
+      
+      // After successful return, try to cancel any associated reservation
+      try {
+        const loan = response.data;
+        if (loan.reservationId) {
+          // Cancel the associated reservation
+          await this.updateReservationStatus(loan.reservationId.toString(), 'CANCELLED');
+        }
+      } catch (error) {
+        console.error('Failed to cancel associated reservation:', error);
+        // Continue even if reservation cancellation fails
+      }
+
+      // Invalidate both active loans and reservations queries to ensure UI is updated
+      return response.data;
+    } catch (error) {
+      console.error('Error returning book:', error);
+      throw error;
+    }
   },
 
   // Get active reservations for the current user

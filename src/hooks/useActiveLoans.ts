@@ -13,9 +13,10 @@ export function useActiveLoans(userId?: number) {
   });
 
   const returnLoanMutation = useMutation({
-    mutationFn: loanService.returnBook,
+    mutationFn: loanService.returnLoan,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['activeLoans'] });
+      queryClient.invalidateQueries({ queryKey: ['reservations'] });
       toast.success('Book returned successfully');
     },
     onError: (error: any) => {

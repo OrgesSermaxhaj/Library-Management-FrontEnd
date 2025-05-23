@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/hooks/useTheme";
-import { Sun, Moon, User, LogOut, Bell } from "lucide-react";
+import { Sun, Moon, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCallback } from "react";
@@ -35,11 +35,6 @@ const Header = () => {
         </h1>
         
         <div className="flex items-center ml-auto space-x-3">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
-          </Button>
-          
           <Button
             variant="ghost"
             size="icon"

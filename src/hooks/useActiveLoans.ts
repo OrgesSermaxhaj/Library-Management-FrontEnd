@@ -2,13 +2,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { loanService } from '@/services/loans';
 import { toast } from 'sonner';
 
+export interface Loan {
+  id: string;
+  title: string;
+  author: string;
+  coverImage?: string;
+  dueDate: string;
+}
+
 export function useActiveLoans(userId?: number) {
   const queryClient = useQueryClient();
 
   const { data: loans = [], isLoading, error } = useQuery({
     queryKey: ['activeLoans', userId],
     queryFn: () => loanService.getActiveLoans(),
-    enabled: !!userId,
+    enabled: true,
     retry: 1,
   });
 

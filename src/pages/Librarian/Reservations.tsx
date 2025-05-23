@@ -29,14 +29,15 @@ const Reservations = () => {
   // Update reservation status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ reservationId, status }: { reservationId: number; status: ReservationStatus }) => {
-      // Only update the reservation status, do not create a loan here
       return await reservationService.updateReservationStatus(reservationId, status);
     },
     onSuccess: (_, variables) => {
-      // Invalidate both reservations and loans queries to ensure UI is updated
+      // Invalidate all relevant queries to ensure UI is updated
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       queryClient.invalidateQueries({ queryKey: ['activeLoans'] });
       queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] }); // Invalidate stats to update counts
+      
       // Show appropriate success message based on the new status
       if (variables.status === 'APPROVED') {
         toast.success('Reservation approved and ready for pickup');
@@ -60,8 +61,11 @@ const Reservations = () => {
       return await reservationService.confirmPickup(reservationId);
     },
     onSuccess: () => {
+      // Invalidate all relevant queries to ensure UI is updated
       queryClient.invalidateQueries({ queryKey: ['reservations'] });
       queryClient.invalidateQueries({ queryKey: ['activeLoans'] });
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      queryClient.invalidateQueries({ queryKey: ['stats'] }); // Invalidate stats to update counts
       toast.success('Book pickup confirmed and loan created!');
     },
     onError: (error: any) => {
@@ -211,7 +215,7 @@ const Reservations = () => {
   }
 
   return (
-    <LibrarianLayout>
+    <LibrarianLayout> 
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -247,36 +251,22 @@ const Reservations = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Book</TableHead>
-                  <TableHead>Author</TableHead>
                   <TableHead>Member</TableHead>
                   <TableHead>Reservation Date</TableHead>
-                  <TableHead>Due Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredReservations.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      No reservations found
-                    </TableCell>
+                {filteredReservations.map((reservation) => (
+                  <TableRow key={reservation.id}>
+                    <TableCell className="font-medium">{reservation.title}</TableCell>
+                    <TableCell>{reservation.userFullName}</TableCell>
+                    <TableCell>{formatDate(reservation.loanDate)}</TableCell>
+                    <TableCell>{getStatusBadge(reservation.status)}</TableCell>
+                    <TableCell className="text-right">{getActionButton(reservation)}</TableCell>
                   </TableRow>
-                ) : (
-                  filteredReservations.map((reservation) => (
-                    <TableRow key={reservation.id}>
-                      <TableCell>{reservation.title}</TableCell>
-                      <TableCell>{reservation.authorName}</TableCell>
-                      <TableCell>{reservation.userFullName}</TableCell>
-                      <TableCell>{formatDate(reservation.loanDate)}</TableCell>
-                      <TableCell>{formatDate(reservation.dueDate)}</TableCell>
-                      <TableCell>{getStatusBadge(reservation.status)}</TableCell>
-                      <TableCell className="text-right">
-                        {getActionButton(reservation)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
+                ))}
               </TableBody>
             </Table>
           </CardContent>

@@ -1,17 +1,14 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   LayoutDashboard, 
-  BookOpen, 
-  Calendar, 
-  Bell, 
-  Users, 
+  BookOpen,
+  LibraryBig,
+  Calendar,
   PenSquare,
   Menu,
-  X,
-  LibraryBig
+  X
 } from "lucide-react";
 
 const navigationItems = [
@@ -19,8 +16,6 @@ const navigationItems = [
   { name: "Book Inventory", path: "/librarian/inventory", icon: BookOpen },
   { name: "Loan Management", path: "/librarian/loans", icon: LibraryBig },
   { name: "Reservations", path: "/librarian/reservations", icon: Calendar },
-  { name: "Notifications", path: "/librarian/notifications", icon: Bell },
-  { name: "Member Profiles", path: "/librarian/members", icon: Users },
   { name: "Announcements", path: "/librarian/announcements", icon: PenSquare },
 ];
 

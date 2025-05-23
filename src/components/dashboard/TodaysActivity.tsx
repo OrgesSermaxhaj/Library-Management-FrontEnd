@@ -1,73 +1,49 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Book, Clock, AlertCircle, User } from "lucide-react";
-import { format } from "date-fns";
+import { format, isToday, parseISO } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { loanService } from "@/services/loans";
+import { reservationService } from "@/services/reservations";
 
 interface Activity {
-  id: number;
-  type: 'LOAN' | 'RETURN' | 'RESERVATION' | 'FINE';
+  id: string;
+  type: 'LOAN' | 'RETURN' | 'RESERVATION';
   description: string;
   timestamp: string;
   memberName: string;
 }
 
 const TodaysActivity = () => {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Fetch active loans
+  const { data: activeLoans = [], isLoading: loansLoading } = useQuery({
+    queryKey: ['activeLoans'],
+    queryFn: loanService.getActiveLoans,
+  });
 
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+  // Fetch reservations
+  const { data: reservations = [], isLoading: reservationsLoading } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: reservationService.getReservations,
+  });
 
-        // Mock data
-        const mockActivities: Activity[] = [
-          {
-            id: 1,
-            type: 'LOAN',
-            description: 'Book borrowed',
-            timestamp: new Date().toISOString(),
-            memberName: 'John Doe'
-          },
-          {
-            id: 2,
-            type: 'RETURN',
-            description: 'Book returned',
-            timestamp: new Date().toISOString(),
-            memberName: 'Jane Smith'
-          },
-          {
-            id: 3,
-            type: 'RESERVATION',
-            description: 'Book reserved',
-            timestamp: new Date().toISOString(),
-            memberName: 'Mike Johnson'
-          },
-          {
-            id: 4,
-            type: 'FINE',
-            description: 'Late return fine',
-            timestamp: new Date().toISOString(),
-            memberName: 'Sarah Wilson'
-          }
-        ];
-
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        setActivities(mockActivities);
-      } catch (err) {
-        setError('Failed to fetch today\'s activities');
-        console.error('Error fetching today\'s activities:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchActivities();
-  }, []);
+  // Combine and sort activities
+  const activities: Activity[] = [
+    ...activeLoans.map(loan => ({
+      id: `loan-${loan.id}`,
+      type: 'LOAN' as const,
+      description: `Book borrowed: ${loan.bookTitle}`,
+      timestamp: loan.loanDate,
+      memberName: loan.userFullName
+    })),
+    ...reservations.map(reservation => ({
+      id: `reservation-${reservation.id}`,
+      type: 'RESERVATION' as const,
+      description: `Book reserved: ${reservation.title}`,
+      timestamp: reservation.loanDate,
+      memberName: reservation.userFullName
+    }))
+  ].filter(activity => isToday(parseISO(activity.timestamp)))
+   .sort((a, b) => parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime());
 
   const getActivityIcon = (type: Activity['type']) => {
     switch (type) {
@@ -77,12 +53,10 @@ const TodaysActivity = () => {
         return <Clock className="h-4 w-4" />;
       case 'RESERVATION':
         return <User className="h-4 w-4" />;
-      case 'FINE':
-        return <AlertCircle className="h-4 w-4" />;
     }
   };
 
-  if (isLoading) {
+  if (loansLoading || reservationsLoading) {
     return (
       <Card>
         <CardHeader>
@@ -92,19 +66,6 @@ const TodaysActivity = () => {
           <div className="flex items-center justify-center h-32">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Today's Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-red-500">{error}</div>
         </CardContent>
       </Card>
     );
@@ -128,7 +89,7 @@ const TodaysActivity = () => {
                 <div className="flex-1">
                   <p className="text-sm font-medium">{activity.description}</p>
                   <p className="text-xs text-gray-500">
-                    {activity.memberName} • {format(new Date(activity.timestamp), 'h:mm a')}
+                    {activity.memberName} • {format(parseISO(activity.timestamp), 'h:mm a')}
                   </p>
                 </div>
               </div>

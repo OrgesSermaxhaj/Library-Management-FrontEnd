@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/hooks/useTheme";
-import { Sun, Moon, User, LogOut, Bell } from "lucide-react";
+import { Sun, Moon, User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCallback } from "react";
@@ -35,16 +35,12 @@ const Header = () => {
         </h1>
         
         <div className="flex items-center ml-auto space-x-3">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell size={20} className="text-gray-600 dark:text-gray-400" />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
-          </Button>
-          
           <Button
             variant="ghost"
             size="icon"
             onClick={handleThemeToggle}
             aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            className="hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             {theme === "dark" ? (
               <Sun size={20} className="text-gray-400" />
@@ -58,14 +54,14 @@ const Header = () => {
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="https://github.com/shadcn.png" alt="User" />
-                  <AvatarFallback>{user?.fullName?.charAt(0) || 'U'}</AvatarFallback>
+                  <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56">
               <div className="flex items-center justify-start gap-2 p-2">
                 <div className="flex flex-col space-y-1 leading-none">
-                  <p className="font-medium">{user?.fullName || 'User'}</p>
+                  <p className="font-medium">{user?.name || 'User'}</p>
                   <p className="text-sm text-muted-foreground">{user?.email || 'user@example.com'}</p>
                 </div>
               </div>

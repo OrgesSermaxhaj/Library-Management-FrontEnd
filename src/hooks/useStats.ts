@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useUsers } from "./useUsers";
 import { useBooks } from "./useBooks";
+import { useQuery } from "@tanstack/react-query";
+import { loanService } from "@/services/loans";
+import { reservationService } from "@/services/reservations";
+import { isAfter, parseISO } from "date-fns";
 
 interface StatsData {
   totalUsers: {
@@ -27,11 +31,11 @@ interface StatsData {
     value: number;
     trend: { value: number; isPositive: boolean };
   };
-  issuesReported: {
+  booksReserved: {
     value: number;
     trend: { value: number; isPositive: boolean };
   };
-  overdueLoans: {
+  overdueReturns: {
     value: number;
     trend: { value: number; isPositive: boolean };
   };
@@ -43,8 +47,20 @@ export function useStats() {
   const { users } = useUsers();
   const { books } = useBooks();
 
+  // Fetch active loans
+  const { data: activeLoans = [] } = useQuery({
+    queryKey: ['activeLoans'],
+    queryFn: loanService.getActiveLoans,
+  });
+
+  // Fetch reservations
+  const { data: reservations = [] } = useQuery({
+    queryKey: ['reservations'],
+    queryFn: reservationService.getReservations,
+  });
+
   useEffect(() => {
-    if (users && books) {
+    if (users && books && activeLoans && reservations) {
       // Calculate total users
       const totalUsers = users.length;
       
@@ -54,21 +70,32 @@ export function useStats() {
       // Calculate active members (users with role MEMBER)
       const activeMembers = users.filter(user => user.role === "MEMBER").length;
 
+      // Calculate overdue loans
+      const overdueLoans = activeLoans.filter(loan => {
+        const dueDate = parseISO(loan.dueDate);
+        return isAfter(new Date(), dueDate);
+      });
+
+      // Calculate pending reservations
+      const pendingReservations = reservations.filter(r => 
+        r.status === 'PENDING' || r.status === 'APPROVED'
+      );
+
       setStats({
         totalUsers: {
           value: totalUsers,
-          trend: { value: 0, isPositive: true } // We don't have historical data for trend
+          trend: { value: 0, isPositive: true }
         },
         activeLoans: {
-          value: 0, // We'll need to implement this
+          value: activeLoans.length,
           trend: { value: 0, isPositive: true }
         },
         overdueBooks: {
-          value: 0, // We'll need to implement this
+          value: overdueLoans.length,
           trend: { value: 0, isPositive: false }
         },
         totalFines: {
-          value: "$0.00", // We'll need to implement this
+          value: "$0.00",
           trend: { value: 0, isPositive: true }
         },
         totalBooks: {
@@ -79,18 +106,18 @@ export function useStats() {
           value: activeMembers,
           trend: { value: 0, isPositive: true }
         },
-        issuesReported: {
-          value: 0, // We'll need to implement this
-          trend: { value: 0, isPositive: false }
+        booksReserved: {
+          value: pendingReservations.length,
+          trend: { value: 0, isPositive: true }
         },
-        overdueLoans: {
-          value: 0, // We'll need to implement this
+        overdueReturns: {
+          value: overdueLoans.length,
           trend: { value: 0, isPositive: false }
         }
       });
       setIsLoading(false);
     }
-  }, [users, books]);
+  }, [users, books, activeLoans, reservations]);
 
   return { stats, isLoading };
 }

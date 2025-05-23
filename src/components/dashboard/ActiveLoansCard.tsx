@@ -1,28 +1,25 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useActiveLoans, Loan } from "@/hooks/useActiveLoans";
+import { useActiveLoans } from "@/hooks/useActiveLoans";
+import { loanService, Loan } from "@/services/loans";
 import { Calendar, BookOpen } from "lucide-react";
 import { format, parseISO, isAfter } from "date-fns";
 
-const LoanItem = ({ loan, onReturn }: { loan: Loan; onReturn: (id: string) => void }) => {
+const LoanItem = ({ loan, onReturn }: { loan: Loan; onReturn: (id: number) => void }) => {
   const dueDate = parseISO(loan.dueDate);
   const isOverdue = isAfter(new Date(), dueDate);
   
   return (
     <div className="flex items-center gap-4 p-4 border-b last:border-0 border-gray-100 dark:border-gray-800">
       <div className="h-16 w-12 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden flex-shrink-0">
-        {loan.coverImage ? (
-          <img src={loan.coverImage} alt={loan.title} className="h-full w-full object-cover" />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center text-gray-400">
-            <BookOpen size={24} />
-          </div>
-        )}
+        <div className="h-full w-full flex items-center justify-center text-gray-400">
+          <BookOpen size={24} />
+        </div>
       </div>
       
       <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate">{loan.title}</h4>
-        <p className="text-sm text-gray-500 dark:text-gray-400">{loan.author}</p>
+        <h4 className="font-medium text-gray-900 dark:text-gray-100 truncate">{loan.bookTitle}</h4>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{loan.authorName}</p>
         <div className="flex items-center mt-1 text-xs">
           <Calendar size={12} className="mr-1" />
           <span className={isOverdue ? "text-red-500" : "text-gray-500 dark:text-gray-400"}>

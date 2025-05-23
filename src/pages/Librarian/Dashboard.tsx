@@ -84,16 +84,21 @@ const LibrarianDashboard = () => {
   const renderContent = () => {
     if (statsLoading || activeLoansLoading || reservationsLoading) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      );
-    }
-
-    if (!stats) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">Failed to load dashboard data</p>
+        <div className="animate-pulse space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                  <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="h-[300px] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
         </div>
       );
     }

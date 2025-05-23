@@ -7,6 +7,7 @@ import { reservationService } from "@/services/reservations";
 import { isAfter, parseISO } from "date-fns";
 
 interface StatsData {
+<<<<<<< HEAD
   totalUsers: {
     value: number;
     trend: { value: number; isPositive: boolean };
@@ -39,13 +40,18 @@ interface StatsData {
     value: number;
     trend: { value: number; isPositive: boolean };
   };
+=======
+  totalUsers: number;
+  totalBooks: number;
+  activeMembers: number;
+>>>>>>> 2b1285f55776559f37a05147fa200f06966d204c
 }
 
 export function useStats() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { users } = useUsers();
-  const { books } = useBooks();
+  const { users, isLoading: usersLoading } = useUsers();
+  const { books, isLoading: booksLoading } = useBooks();
 
   // Fetch active loans
   const { data: activeLoans = [] } = useQuery({
@@ -60,15 +66,19 @@ export function useStats() {
   });
 
   useEffect(() => {
+<<<<<<< HEAD
     if (users && books && activeLoans && reservations) {
+=======
+    if (!usersLoading && !booksLoading) {
+>>>>>>> 2b1285f55776559f37a05147fa200f06966d204c
       // Calculate total users
-      const totalUsers = users.length;
+      const totalUsers = users?.length || 0;
       
       // Calculate total books
-      const totalBooks = books.length;
+      const totalBooks = books?.length || 0;
       
       // Calculate active members (users with role MEMBER)
-      const activeMembers = users.filter(user => user.role === "MEMBER").length;
+      const activeMembers = users?.filter(user => user.role === "MEMBER").length || 0;
 
       // Calculate overdue loans
       const overdueLoans = activeLoans.filter(loan => {
@@ -82,6 +92,7 @@ export function useStats() {
       );
 
       setStats({
+<<<<<<< HEAD
         totalUsers: {
           value: totalUsers,
           trend: { value: 0, isPositive: true }
@@ -118,6 +129,15 @@ export function useStats() {
       setIsLoading(false);
     }
   }, [users, books, activeLoans, reservations]);
+=======
+        totalUsers,
+        totalBooks,
+        activeMembers
+      });
+      setIsLoading(false);
+    }
+  }, [users, books, usersLoading, booksLoading]);
+>>>>>>> 2b1285f55776559f37a05147fa200f06966d204c
 
   return { stats, isLoading };
 }

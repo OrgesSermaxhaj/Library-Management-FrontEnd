@@ -1,14 +1,32 @@
-
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useStats } from "@/hooks/useStats";
-import { Users, BookOpen, AlertCircle, DollarSign } from "lucide-react";
+import { Users, BookOpen, UserCog, Library } from "lucide-react";
 import StatsCard from "@/components/dashboard/StatsCard";
-import { OverdueTable } from "@/components/dashboard/OverdueTable";
-import { BorrowChart } from "@/components/dashboard/BorrowChart";
+import { useAnnouncements } from "@/hooks/useAnnouncements";
+import { format, parseISO } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { PlusCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AdminDashboard = () => {
-  const { stats, isLoading } = useStats();
+  const { stats, isLoading: statsLoading } = useStats();
+  const { announcements, isLoading: announcementsLoading, error: announcementsError } = useAnnouncements();
+  const navigate = useNavigate();
+
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return "No date";
+    try {
+      return format(parseISO(dateString), "MMM d, yyyy");
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "Invalid date";
+    }
+  };
+
+  const handleNewAnnouncement = () => {
+    navigate('/admin/announcements');
+  };
 
   return (
     <AdminLayout>
@@ -16,115 +34,119 @@ const AdminDashboard = () => {
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Admin Dashboard</h1>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {isLoading || !stats ? (
-            // Loading skeletons for stats cards
-            <>
-              {[...Array(4)].map((_, idx) => (
-                <div 
-                  key={idx} 
-                  className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm border border-gray-100 dark:border-gray-700 animate-pulse"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="w-full">
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2"></div>
-                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
-                      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
-                    </div>
-                    <div className="rounded-full p-2 bg-gray-200 dark:bg-gray-700 h-10 w-10"></div>
-                  </div>
-                </div>
-              ))}
-            </>
-          ) : (
-            <>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <StatsCard
                 title="Total Users"
-                value={stats.totalUsers}
+            value={stats?.totalUsers || 0}
                 icon={Users}
+            isLoading={statsLoading}
+            className="h-[200px]"
               />
               <StatsCard
                 title="Total Books"
-                value={stats.totalBooks}
+            value={stats?.totalBooks || 0}
                 icon={BookOpen}
-              />
-              <StatsCard
-                title="Overdue Books"
-                value={stats.overdueLoans}
-                icon={AlertCircle}
-              />
-              <StatsCard
-                title="Total Fines"
-                value={stats.totalFines.value}
-                icon={DollarSign}
-                trend={stats.totalFines.trend}
-              />
-            </>
-          )}
+            isLoading={statsLoading}
+            className="h-[200px]"
+          />
         </div>
         
-        {/* Charts and Tables */}
-        {!isLoading && stats && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Chart - 2/3 width on large screens */}
-            <div className="lg:col-span-2">
-              <BorrowChart />
+        {/* Management Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* User Management Card */}
+          <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => navigate('/admin/users')}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    User Management
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Manage library members, roles, and permissions
+                  </p>
             </div>
-            
-            {/* Quick Stats - 1/3 width on large screens */}
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg font-medium">System Overview</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">System Uptime</span>
-                        <span className="font-medium">99.9%</span>
-                      </div>
-                      <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-800 rounded-full">
-                        <div className="h-2 bg-green-500 rounded-full" style={{ width: "99.9%" }}></div>
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-full group-hover:scale-110 transition-transform">
+                  <UserCog className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                       </div>
                     </div>
-                    
-                    <div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Database Usage</span>
-                        <span className="font-medium">68%</span>
+              <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <span className="flex items-center">
+                  <Users className="h-4 w-4 mr-1" />
+                  {stats?.activeMembers || 0} Active Members
+                </span>
                       </div>
-                      <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-800 rounded-full">
-                        <div className="h-2 bg-blue-500 rounded-full" style={{ width: "68%" }}></div>
+            </CardContent>
+          </Card>
+
+          {/* Book Management Card */}
+          <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => navigate('/admin/books')}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                    Book Management
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Manage library inventory, categories, and availability
+                  </p>
+                      </div>
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-full group-hover:scale-110 transition-transform">
+                  <Library className="h-8 w-8 text-green-600 dark:text-green-400" />
                       </div>
                     </div>
-                    
-                    <div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Storage Space</span>
-                        <span className="font-medium">42%</span>
-                      </div>
-                      <div className="mt-2 h-2 bg-gray-100 dark:bg-gray-800 rounded-full">
-                        <div className="h-2 bg-amber-500 rounded-full" style={{ width: "42%" }}></div>
-                      </div>
-                    </div>
+              <div className="mt-4 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <span className="flex items-center">
+                  <BookOpen className="h-4 w-4 mr-1" />
+                  {stats?.totalBooks || 0} Total Books
+                </span>
                   </div>
                 </CardContent>
               </Card>
             </div>
+
+        {/* Announcements Section */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Recent Announcements</CardTitle>
+            <Button size="sm" className="flex items-center gap-1" onClick={handleNewAnnouncement}>
+              <PlusCircle size={16} />
+              <span>New</span>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {announcementsLoading ? (
+              <div className="space-y-4 animate-pulse">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="pb-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 last:pb-0">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+                  </div>
+                ))}
+              </div>
+            ) : announcementsError ? (
+              <div className="text-center py-4 text-red-500">
+                {announcementsError}
+              </div>
+            ) : announcements.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                No announcements found
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {announcements.map((announcement) => (
+                  <div key={announcement.id} className="pb-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0 last:pb-0">
+                    <h4 className="font-medium text-gray-900 dark:text-white">{announcement.title}</h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      {formatDate(announcement.publishDate)}
+                    </p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300">{announcement.content}</p>
+          </div>
+                ))}
           </div>
         )}
-        
-        {/* Overdue Table - Full width */}
-        {!isLoading && stats && <OverdueTable />}
-        
-        {/* Loading state for the entire dashboard */}
-        {isLoading && (
-          <div className="animate-pulse space-y-6">
-            <div className="h-[200px] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-            <div className="h-[300px] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );

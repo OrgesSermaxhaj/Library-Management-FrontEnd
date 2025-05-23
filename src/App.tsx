@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import AdminAnnouncements from "./pages/Admin/Announcements";
 import UserManagement from "./pages/Admin/UserManagement";
+import AdminBooks from "./pages/Admin/Books";
 
 // Member dashboard routes
 import MemberDashboard from "./pages/Member/Dashboard";

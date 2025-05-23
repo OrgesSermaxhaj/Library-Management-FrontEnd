@@ -5,25 +5,26 @@ import QrScanButton from "@/components/dashboard/QrScanButton";
 import ServiceStatus from "@/components/dashboard/ServiceStatus";
 import BranchTable from "@/components/dashboard/BranchTable";
 import StatsCard from "@/components/dashboard/StatsCard";
-import { Book, Users, Clock, AlertCircle } from "lucide-react";
+import { Book, Users, Clock, AlertCircle, Library } from "lucide-react";
 import { useStats } from "@/hooks/useStats";
+import { useQuery } from "@tanstack/react-query";
+import { loanService } from "@/services/loans";
 
 const LibrarianDashboard = () => {
-  const { stats, isLoading, error } = useStats();
+  const { stats, isLoading: statsLoading } = useStats();
+  
+  // Fetch active loans
+  const { data: activeLoans = [], isLoading: activeLoansLoading } = useQuery({
+    queryKey: ['activeLoans'],
+    queryFn: loanService.getActiveLoans,
+    refetchInterval: 5000 // Refetch every 5 seconds
+  });
   
   const renderContent = () => {
-    if (isLoading) {
+    if (statsLoading || activeLoansLoading) {
       return (
         <div className="flex items-center justify-center h-full">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      );
-    }
-
-    if (error) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-red-500">{error}</p>
         </div>
       );
     }
@@ -44,7 +45,7 @@ const LibrarianDashboard = () => {
         </div>
         
         {/* Stats Cards Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatsCard 
             title="Total Books" 
             value={stats.totalBooks.value} 
@@ -56,6 +57,12 @@ const LibrarianDashboard = () => {
             value={stats.activeMembers.value} 
             icon={Users}
             trend={stats.activeMembers.trend}
+          />
+          <StatsCard 
+            title="Currently Borrowed" 
+            value={activeLoans.length} 
+            icon={Library}
+            trend={{ value: 0, isPositive: true }}
           />
           <StatsCard 
             title="Overdue Loans" 

@@ -35,8 +35,6 @@ import LibrarianDashboard from "./pages/Librarian/Dashboard";
 import Inventory from "./pages/Librarian/Inventory";
 import LoanManagement from "./pages/Librarian/LoanManagement";
 import Reservations from "./pages/Librarian/Reservations";
-import Notifications from "./pages/Librarian/Notifications";
-import MemberProfiles from "./pages/Librarian/Members";
 import Announcements from "./pages/Librarian/Announcements";
 
 const queryClient = new QueryClient();
@@ -160,16 +158,6 @@ const App = () => (
           <Route path="/librarian/reservations" element={
             <ProtectedRoute allowedRoles={["LIBRARIAN"]}>
               <Reservations />
-            </ProtectedRoute>
-          } />
-          <Route path="/librarian/notifications" element={
-            <ProtectedRoute allowedRoles={["LIBRARIAN"]}>
-              <Notifications />
-            </ProtectedRoute>
-          } />
-          <Route path="/librarian/members" element={
-            <ProtectedRoute allowedRoles={["LIBRARIAN"]}>
-              <MemberProfiles />
             </ProtectedRoute>
           } />
           <Route path="/librarian/announcements" element={

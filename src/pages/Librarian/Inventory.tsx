@@ -99,7 +99,7 @@ const Inventory = () => {
 
   return (
     <LibrarianLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 lg:ml-[250px] p-4 md:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Book Inventory Management</h1>
           <AddBookForm onAddBook={handleAddBook} />

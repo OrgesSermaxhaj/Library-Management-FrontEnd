@@ -212,7 +212,7 @@ const Reservations = () => {
 
   return (
     <LibrarianLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 lg:ml-[250px] p-4 md:p-8">
         <Card>
           <CardHeader>
             <CardTitle>Reservation Management</CardTitle>

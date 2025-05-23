@@ -8,6 +8,12 @@ export const reviewsService = {
     return response.data;
   },
 
+  // Get reviews for a specific book
+  getBookReviews: async (bookId: number): Promise<Review[]> => {
+    const response = await api.get(`/reviews/book/${bookId}`);
+    return response.data;
+  },
+
   // Get popular reviews
   getPopularReviews: async (): Promise<Review[]> => {
     const response = await api.get("/reviews/popular");
@@ -22,7 +28,11 @@ export const reviewsService = {
 
   // Create a new review
   createReview: async (review: Omit<Review, 'id'>): Promise<Review> => {
-    const response = await api.post("/reviews", review);
+    const response = await api.post("/reviews", {
+      bookId: review.bookId,
+      comment: review.comment,
+      rating: review.rating
+    });
     return response.data;
   },
 

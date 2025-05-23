@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import MemberLayout from "@/components/layout/MemberLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,20 +8,20 @@ import { Rating } from "@/components/reviews/Rating";
 import { useReviews } from "@/hooks/useReviews";
 import { BookReview } from "@/components/reviews/BookReview";
 import { useAuth } from "@/contexts/AuthContext";
-import { v4 as uuidv4 } from 'uuid';
 import api from "@/lib/api";
 
 const Reviews = () => {
-  const { myReviews, popularReviews, addReview } = useReviews();
+  const { 
+    myReviews, 
+    popularReviews, 
+    addReview, 
+    isLoading,
+    isAdding 
+  } = useReviews();
   const { user } = useAuth();
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(0);
   const [activeTab, setActiveTab] = useState("my-reviews");
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-  };
-
   const [books, setBooks] = useState<{ id: number; title: string; author: string }[]>([]);
 
   useEffect(() => {
@@ -74,12 +73,25 @@ const Reviews = () => {
     }
   };
 
+  if (isLoading) {
+    return (
+      <MemberLayout>
+        <div className="max-w-6xl mx-auto space-y-6">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Book Reviews</h1>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+          </div>
+        </div>
+      </MemberLayout>
+    );
+  }
+
   return (
     <MemberLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Book Reviews</h1>
         
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="my-reviews">My Reviews</TabsTrigger>
             <TabsTrigger value="popular">Popular Reviews</TabsTrigger>
@@ -103,18 +115,26 @@ const Reviews = () => {
             ) : (
               <div className="grid gap-4">
                 {myReviews.map((review) => (
-                  <BookReview key={review.id} review={review} isEditable />
+                  <BookReview key={review.id} review={review} />
                 ))}
               </div>
             )}
           </TabsContent>
           
           <TabsContent value="popular" className="space-y-4">
-            <div className="grid gap-4">
-              {popularReviews.map((review) => (
-                <BookReview key={review.id} review={review} />
-              ))}
-            </div>
+            {popularReviews.length === 0 ? (
+              <Card>
+                <CardContent className="py-10 text-center">
+                  <p className="text-muted-foreground">No popular reviews available yet.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {popularReviews.map((review) => (
+                  <BookReview key={review.id} review={review} />
+                ))}
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="write">
@@ -151,7 +171,12 @@ const Reviews = () => {
                 </div>
                 
                 <div className="flex justify-end">
-                  <Button onClick={handleSubmitReview}>Submit Review</Button>
+                  <Button 
+                    onClick={handleSubmitReview}
+                    disabled={isAdding}
+                  >
+                    {isAdding ? 'Submitting...' : 'Submit Review'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

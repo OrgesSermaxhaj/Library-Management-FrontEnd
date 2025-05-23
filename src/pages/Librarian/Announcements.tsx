@@ -165,7 +165,7 @@ const Announcements = () => {
 
   return (
     <LibrarianLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 lg:ml-[250px] p-4 md:p-8">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Announcements</h1>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

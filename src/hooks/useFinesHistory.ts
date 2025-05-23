@@ -1,5 +1,8 @@
-
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
+import { loanService, Loan } from '@/services/loans';
+import api from '@/lib/api';
+import { format, parseISO, differenceInDays } from 'date-fns';
 
 export interface FineRecord {
   id: string;
@@ -25,108 +28,77 @@ export interface FinesHistory {
   history: LoanHistoryRecord[];
 }
 
+// Fine service
+const fineService = {
+  getUserFines: async (userId: number) => {
+    const response = await api.get(`/fines/user/${userId}`);
+    return response.data;
+  }
+};
+
 export function useFinesHistory() {
-  const [finesHistory, setFinesHistory] = useState<FinesHistory | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    // Simulate API call
-    const fetchFinesHistory = () => {
-      setIsLoading(true);
-      
-      // Dummy data
-      setTimeout(() => {
-        const dummyFinesHistory: FinesHistory = {
-          totalUnpaid: 12.50,
-          fines: [
-            {
-              id: "fine-1",
-              amount: 7.50,
-              date: "2025-04-10",
-              title: "The Silent Patient",
-              status: 'unpaid',
-              daysLate: 15
-            },
-            {
-              id: "fine-2",
-              amount: 5.00,
-              date: "2025-03-22",
-              title: "Dune",
-              status: 'unpaid',
-              daysLate: 10
-            },
-            {
-              id: "fine-3",
-              amount: 3.75,
-              date: "2025-02-15",
-              title: "The Great Gatsby",
-              status: 'paid',
-              daysLate: 7
-            }
-          ],
-          history: [
-            {
-              id: "hist-1",
-              title: "The Silent Patient",
-              author: "Alex Michaelides",
-              borrowDate: "2025-03-15",
-              returnDate: "2025-04-10",
-              status: 'overdue'
-            },
-            {
-              id: "hist-2",
-              title: "Dune",
-              author: "Frank Herbert",
-              borrowDate: "2025-03-01",
-              returnDate: "2025-03-22",
-              status: 'returned'
-            },
-            {
-              id: "hist-3",
-              title: "The Great Gatsby",
-              author: "F. Scott Fitzgerald",
-              borrowDate: "2025-01-28",
-              returnDate: "2025-02-15",
-              status: 'returned'
-            },
-            {
-              id: "hist-4",
-              title: "The Alchemist",
-              author: "Paulo Coelho",
-              borrowDate: "2024-12-10",
-              returnDate: "2024-12-31",
-              status: 'returned'
-            }
-          ]
-        };
-        
-        setFinesHistory(dummyFinesHistory);
-        setIsLoading(false);
-        setError(null);
-      }, 500);
-    };
-    
-    fetchFinesHistory();
-  }, []);
-  
-  const payFine = (fineId: string) => {
-    if (finesHistory) {
-      const updatedFines = finesHistory.fines.map(fine => 
-        fine.id === fineId ? {...fine, status: 'paid' as const} : fine
-      );
-      
-      const totalUnpaid = updatedFines
-        .filter(fine => fine.status === 'unpaid')
-        .reduce((sum, fine) => sum + fine.amount, 0);
-      
-      setFinesHistory({
-        ...finesHistory,
-        fines: updatedFines,
-        totalUnpaid
-      });
+  const { user } = useAuth();
+
+  // Fetch loan history
+  const { data: loanHistory = [], isLoading: isLoadingLoans, error: loanError } = useQuery({
+    queryKey: ['loanHistory'],
+    queryFn: loanService.getLoanHistory,
+  });
+
+  // Fetch user fines
+  const { data: fines = [], isLoading: isLoadingFines, error: fineError } = useQuery({
+    queryKey: ['userFines', user?.id],
+    queryFn: () => fineService.getUserFines(user?.id || 0),
+    enabled: !!user?.id
+  });
+
+  // Process loan history into history records
+  const history: LoanHistoryRecord[] = loanHistory.map(loan => ({
+    id: loan.id.toString(),
+    title: loan.bookTitle,
+    author: loan.authorName,
+    borrowDate: loan.loanDate,
+    returnDate: loan.returnDate || '',
+    status: loan.returnStatus === 'LATE' ? 'overdue' : 'returned'
+  }));
+
+  // Process fines into fine records
+  const fineRecords: FineRecord[] = loanHistory
+    .filter(loan => loan.returnStatus === 'LATE')
+    .map(loan => {
+      const matchingFine = fines.find(fine => fine.issuedDate === loan.returnDate);
+      const dueDate = parseISO(loan.dueDate);
+      const returnDate = loan.returnDate ? parseISO(loan.returnDate) : new Date();
+      const daysLate = differenceInDays(returnDate, dueDate);
+
+      return {
+        id: loan.id.toString(),
+        amount: 10.00, // Fixed $10 fine amount
+        date: loan.returnDate || '',
+        title: loan.bookTitle,
+        status: matchingFine?.paid ? 'paid' : 'unpaid',
+        daysLate: Math.max(0, daysLate)
+      };
+    });
+
+  // Calculate total unpaid fines
+  const totalUnpaid = fineRecords
+    .filter(fine => fine.status === 'unpaid')
+    .reduce((sum, fine) => sum + fine.amount, 0);
+
+  const finesHistory: FinesHistory = {
+    totalUnpaid,
+    fines: fineRecords,
+    history
+  };
+
+  return {
+    finesHistory,
+    isLoading: isLoadingLoans || isLoadingFines,
+    error: loanError || fineError,
+    payFine: () => {
+      // This is a no-op since fines must be paid at the library desk
+      console.log('Fines must be paid at the library desk');
     }
   };
-  
-  return { finesHistory, isLoading, error, payFine };
 }

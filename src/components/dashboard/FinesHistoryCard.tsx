@@ -1,12 +1,10 @@
-
-import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFinesHistory, FineRecord, LoanHistoryRecord } from "@/hooks/useFinesHistory";
 import { DollarSign, ArrowDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
-const FineItem = ({ fine, onPay }: { fine: FineRecord; onPay: (id: string) => void }) => {
+const FineItem = ({ fine }: { fine: FineRecord }) => {
   return (
     <div className="flex items-center justify-between p-3 border-b last:border-0 border-gray-100 dark:border-gray-800">
       <div>
@@ -21,20 +19,13 @@ const FineItem = ({ fine, onPay }: { fine: FineRecord; onPay: (id: string) => vo
         <span className={`font-semibold mr-3 ${fine.status === 'paid' ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
           ${fine.amount.toFixed(2)}
         </span>
-        {fine.status === 'unpaid' && (
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => onPay(fine.id)}
-          >
-            Pay
-          </Button>
-        )}
-        {fine.status === 'paid' && (
-          <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 px-2 py-1 rounded-full">
-            Paid
-          </span>
-        )}
+        <span className={`text-xs px-2 py-1 rounded-full ${
+          fine.status === 'paid' 
+            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+        }`}>
+          {fine.status === 'paid' ? 'Paid' : 'Unpaid'}
+        </span>
       </div>
     </div>
   );
@@ -66,7 +57,7 @@ const HistoryItem = ({ history }: { history: LoanHistoryRecord }) => {
 };
 
 const FinesHistoryCard = () => {
-  const { finesHistory, isLoading, error, payFine } = useFinesHistory();
+  const { finesHistory, isLoading, error } = useFinesHistory();
   
   return (
     <Card className="h-full flex flex-col">
@@ -80,7 +71,7 @@ const FinesHistoryCard = () => {
             <p className="mt-2 text-sm text-gray-500">Loading your data...</p>
           </div>
         ) : error ? (
-          <div className="p-6 text-center text-red-500">{error}</div>
+          <div className="p-6 text-center text-red-500">{error.toString()}</div>
         ) : !finesHistory ? (
           <div className="p-6 text-center text-gray-500">No data available</div>
         ) : (
@@ -109,7 +100,7 @@ const FinesHistoryCard = () => {
                     </div>
                   ) : (
                     finesHistory.fines.map(fine => (
-                      <FineItem key={fine.id} fine={fine} onPay={payFine} />
+                      <FineItem key={fine.id} fine={fine} />
                     ))
                   )}
                 </div>
@@ -130,11 +121,8 @@ const FinesHistoryCard = () => {
               </TabsContent>
             </Tabs>
             
-            <div className="p-3 border-t border-gray-100 dark:border-gray-800 text-center">
-              <Button variant="ghost" size="sm" className="gap-1 text-sm">
-                <span>View All History</span>
-                <ArrowDown size={14} />
-              </Button>
+            <div className="p-3 border-t border-gray-100 dark:border-gray-800 text-center text-sm text-muted-foreground">
+              Fines need to be paid at the library desk
             </div>
           </div>
         )}

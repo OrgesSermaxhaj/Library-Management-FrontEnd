@@ -7,7 +7,6 @@ import { reservationService } from "@/services/reservations";
 import { isAfter, parseISO } from "date-fns";
 
 interface StatsData {
-<<<<<<< HEAD
   totalUsers: {
     value: number;
     trend: { value: number; isPositive: boolean };
@@ -40,11 +39,6 @@ interface StatsData {
     value: number;
     trend: { value: number; isPositive: boolean };
   };
-=======
-  totalUsers: number;
-  totalBooks: number;
-  activeMembers: number;
->>>>>>> 2b1285f55776559f37a05147fa200f06966d204c
 }
 
 export function useStats() {
@@ -66,11 +60,7 @@ export function useStats() {
   });
 
   useEffect(() => {
-<<<<<<< HEAD
     if (users && books && activeLoans && reservations) {
-=======
-    if (!usersLoading && !booksLoading) {
->>>>>>> 2b1285f55776559f37a05147fa200f06966d204c
       // Calculate total users
       const totalUsers = users?.length || 0;
       
@@ -92,7 +82,6 @@ export function useStats() {
       );
 
       setStats({
-<<<<<<< HEAD
         totalUsers: {
           value: totalUsers,
           trend: { value: 0, isPositive: true }
@@ -129,15 +118,6 @@ export function useStats() {
       setIsLoading(false);
     }
   }, [users, books, activeLoans, reservations]);
-=======
-        totalUsers,
-        totalBooks,
-        activeMembers
-      });
-      setIsLoading(false);
-    }
-  }, [users, books, usersLoading, booksLoading]);
->>>>>>> 2b1285f55776559f37a05147fa200f06966d204c
 
   return { stats, isLoading };
 }

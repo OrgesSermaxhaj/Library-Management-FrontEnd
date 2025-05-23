@@ -3,94 +3,36 @@ import { useUsers } from "./useUsers";
 import { useBooks } from "./useBooks";
 
 interface StatsData {
-  totalUsers: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-  activeLoans: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-  overdueBooks: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-  totalFines: {
-    value: string;
-    trend: { value: number; isPositive: boolean };
-  };
-  totalBooks: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-  activeMembers: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-  issuesReported: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-  overdueLoans: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
+  totalUsers: number;
+  totalBooks: number;
+  activeMembers: number;
 }
 
 export function useStats() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { users } = useUsers();
-  const { books } = useBooks();
+  const { users, isLoading: usersLoading } = useUsers();
+  const { books, isLoading: booksLoading } = useBooks();
 
   useEffect(() => {
-    if (users && books) {
+    if (!usersLoading && !booksLoading) {
       // Calculate total users
-      const totalUsers = users.length;
+      const totalUsers = users?.length || 0;
       
       // Calculate total books
-      const totalBooks = books.length;
+      const totalBooks = books?.length || 0;
       
       // Calculate active members (users with role MEMBER)
-      const activeMembers = users.filter(user => user.role === "MEMBER").length;
+      const activeMembers = users?.filter(user => user.role === "MEMBER").length || 0;
 
       setStats({
-        totalUsers: {
-          value: totalUsers,
-          trend: { value: 0, isPositive: true } // We don't have historical data for trend
-        },
-        activeLoans: {
-          value: 0, // We'll need to implement this
-          trend: { value: 0, isPositive: true }
-        },
-        overdueBooks: {
-          value: 0, // We'll need to implement this
-          trend: { value: 0, isPositive: false }
-        },
-        totalFines: {
-          value: "$0.00", // We'll need to implement this
-          trend: { value: 0, isPositive: true }
-        },
-        totalBooks: {
-          value: totalBooks,
-          trend: { value: 0, isPositive: true }
-        },
-        activeMembers: {
-          value: activeMembers,
-          trend: { value: 0, isPositive: true }
-        },
-        issuesReported: {
-          value: 0, // We'll need to implement this
-          trend: { value: 0, isPositive: false }
-        },
-        overdueLoans: {
-          value: 0, // We'll need to implement this
-          trend: { value: 0, isPositive: false }
-        }
+        totalUsers,
+        totalBooks,
+        activeMembers
       });
       setIsLoading(false);
     }
-  }, [users, books]);
+  }, [users, books, usersLoading, booksLoading]);
 
   return { stats, isLoading };
 }

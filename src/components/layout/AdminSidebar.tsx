@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -6,9 +5,6 @@ import {
   LayoutDashboard, 
   Users, 
   BookOpen, 
-  Building2, 
-  Settings,
-  FileText,
   BellRing,
   Menu,
   X,
@@ -19,9 +15,6 @@ const navigationItems = [
   { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
   { name: "User Management", path: "/admin/users", icon: Users },
   { name: "Book Management", path: "/admin/books", icon: BookOpen },
-  { name: "Branch Management", path: "/admin/branches", icon: Building2 },
-  { name: "System Settings", path: "/admin/settings", icon: Settings },
-  { name: "Reports & Logs", path: "/admin/reports", icon: FileText },
   { name: "Announcements", path: "/admin/announcements", icon: BellRing },
 ];
 

@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound";
 import AdminDashboard from "./pages/Admin/Dashboard";
 import AdminAnnouncements from "./pages/Admin/Announcements";
 import UserManagement from "./pages/Admin/UserManagement";
+import AdminBooks from "./pages/Admin/Books";
 
 // Member dashboard routes
 import MemberDashboard from "./pages/Member/Dashboard";
@@ -87,22 +88,7 @@ const App = () => (
           } />
           <Route path="/admin/books" element={
             <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <Books />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/branches" element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/settings" element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin/reports" element={
-            <ProtectedRoute allowedRoles={["ADMIN"]}>
-              <Dashboard />
+              <AdminBooks />
             </ProtectedRoute>
           } />
           <Route path="/admin/announcements" element={

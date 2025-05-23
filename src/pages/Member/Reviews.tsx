@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MemberLayout from "@/components/layout/MemberLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,23 +7,91 @@ import { Textarea } from "@/components/ui/textarea";
 import { Rating } from "@/components/reviews/Rating";
 import { useReviews } from "@/hooks/useReviews";
 import { BookReview } from "@/components/reviews/BookReview";
+import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
 const Reviews = () => {
-  const { myReviews, popularReviews } = useReviews();
+  const { 
+    myReviews, 
+    popularReviews, 
+    addReview, 
+    isLoading,
+    isAdding 
+  } = useReviews();
+  const { user } = useAuth();
   const [reviewText, setReviewText] = useState("");
   const [rating, setRating] = useState(0);
   const [activeTab, setActiveTab] = useState("my-reviews");
+  const [books, setBooks] = useState<{ id: number; title: string; author: string }[]>([]);
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
+  useEffect(() => {
+    // Fetch books from the backend
+    const fetchBooks = async () => {
+      try {
+        const response = await api.get('/books');
+        setBooks(response.data);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+      }
+    };
+    fetchBooks();
+  }, []);
+
+  const handleSubmitReview = async () => {
+    if (!reviewText.trim() || rating === 0) {
+      alert('Please provide both a review text and a rating');
+      return;
+    }
+
+    try {
+      // Get the selected book from the dropdown
+      const bookSelect = document.querySelector('select') as HTMLSelectElement;
+      const selectedBook = bookSelect.value;
+      const selectedBookObj = books.find(b => `${b.title} by ${b.author}` === selectedBook);
+      
+      if (!selectedBookObj) {
+        alert('Please select a valid book');
+        return;
+      }
+
+      // Create the review object
+      const review = {
+        bookId: selectedBookObj.id,
+        userId: user?.id || 0,
+        comment: reviewText,
+        rating: rating
+      };
+
+      // Submit the review
+      await addReview(review);
+      setReviewText('');
+      setRating(0);
+      setActiveTab('my-reviews');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      alert('Failed to submit review. Please try again.');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <MemberLayout>
+        <div className="max-w-6xl mx-auto space-y-6">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Book Reviews</h1>
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+          </div>
+        </div>
+      </MemberLayout>
+    );
+  }
 
   return (
     <MemberLayout>
       <div className="max-w-6xl mx-auto space-y-6">
         <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Book Reviews</h1>
         
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="my-reviews">My Reviews</TabsTrigger>
             <TabsTrigger value="popular">Popular Reviews</TabsTrigger>
@@ -48,18 +115,26 @@ const Reviews = () => {
             ) : (
               <div className="grid gap-4">
                 {myReviews.map((review) => (
-                  <BookReview key={review.id} review={review} isEditable />
+                  <BookReview key={review.id} review={review} />
                 ))}
               </div>
             )}
           </TabsContent>
           
           <TabsContent value="popular" className="space-y-4">
-            <div className="grid gap-4">
-              {popularReviews.map((review) => (
-                <BookReview key={review.id} review={review} />
-              ))}
-            </div>
+            {popularReviews.length === 0 ? (
+              <Card>
+                <CardContent className="py-10 text-center">
+                  <p className="text-muted-foreground">No popular reviews available yet.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {popularReviews.map((review) => (
+                  <BookReview key={review.id} review={review} />
+                ))}
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="write">
@@ -71,10 +146,12 @@ const Reviews = () => {
                 <div className="space-y-1">
                   <label className="text-sm font-medium">Select a Book</label>
                   <select className="w-full p-2 border rounded dark:bg-gray-800 dark:border-gray-700">
-                    <option>-- Select a recently borrowed book --</option>
-                    <option>The Great Gatsby by F. Scott Fitzgerald</option>
-                    <option>To Kill a Mockingbird by Harper Lee</option>
-                    <option>1984 by George Orwell</option>
+                    <option value="">-- Select a book --</option>
+                    {books.map((book) => (
+                      <option key={book.id} value={`${book.title} by ${book.author}`}>
+                        {book.title} by {book.author}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 
@@ -94,7 +171,12 @@ const Reviews = () => {
                 </div>
                 
                 <div className="flex justify-end">
-                  <Button>Submit Review</Button>
+                  <Button 
+                    onClick={handleSubmitReview}
+                    disabled={isAdding}
+                  >
+                    {isAdding ? 'Submitting...' : 'Submit Review'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

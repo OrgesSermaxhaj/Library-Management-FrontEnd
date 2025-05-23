@@ -1,81 +1,132 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Review, NewComment } from "@/types/review";
+import { reviewsService } from "@/services/reviews";
+import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
-import { useState } from "react";
-import { Review } from "@/types/review";
-
-export function useReviews() {
-  const [myReviews] = useState<Review[]>([
-    {
-      id: "1",
-      bookTitle: "The Great Gatsby",
-      author: "F. Scott Fitzgerald",
-      rating: 4,
-      content: "A fascinating exploration of the American Dream through the lens of wealth, love, and disillusionment. Fitzgerald's prose is beautiful and evocative.",
-      date: "2023-03-12",
-      isMyReview: true
-    },
-    {
-      id: "2",
-      bookTitle: "To Kill a Mockingbird",
-      author: "Harper Lee",
-      rating: 5,
-      content: "A powerful and moving story about racial injustice and moral growth. Scout's perspective offers both innocence and insight that makes the narrative especially compelling.",
-      date: "2023-02-05",
-      isMyReview: true,
-      comments: [
-        {
-          user: "Librarian",
-          text: "Wonderful review! We have a book club discussing this next month if you're interested.",
-          date: "2023-02-06"
-        }
-      ]
-    }
-  ]);
-
-  const [popularReviews] = useState<Review[]>([
-    {
-      id: "101",
-      bookTitle: "The Silent Patient",
-      author: "Alex Michaelides",
-      rating: 5,
-      content: "An incredible psychological thriller with a twist I never saw coming. The exploration of trauma and therapy is nuanced and gripping.",
-      date: "2023-04-10",
-      comments: [
-        {
-          user: "Jane D.",
-          text: "I completely agree! I couldn't put it down.",
-          date: "2023-04-11"
-        },
-        {
-          user: "Mark T.",
-          text: "The ending blew my mind. Best thriller I've read this year.",
-          date: "2023-04-12"
-        }
-      ]
-    },
-    {
-      id: "102",
-      bookTitle: "Project Hail Mary",
-      author: "Andy Weir",
-      rating: 5,
-      content: "As good as The Martian, if not better. The science is fascinating, the alien encounter is unique, and the main character's journey is both intellectual and emotional.",
-      date: "2023-03-28",
-      comments: [
-        {
-          user: "Sci-Fi Lover",
-          text: "Completely agree. The friendship that develops is so well written!",
-          date: "2023-03-29"
-        }
-      ]
-    },
-    {
-      id: "103",
-      bookTitle: "Where the Crawdads Sing",
-      author: "Delia Owens",
-      rating: 4,
-      content: "A beautiful and haunting novel that combines a coming-of-age story with a mystery. The descriptions of the marsh and wildlife are vivid and immersive.",
-      date: "2023-04-02"
-    }
-  ]);
-
-  return { myReviews, popularReviews };
+// Extended Review type with book details
+interface ReviewWithBookDetails extends Review {
+  bookTitle: string;
+  authorName: string;
 }
+
+export const useReviews = () => {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Fetch all reviews
+  const { 
+    data: allReviews = [], 
+    isLoading: isLoadingReviews,
+    error: reviewsError 
+  } = useQuery({
+    queryKey: ['reviews'],
+    queryFn: async () => {
+      const reviews = await reviewsService.getAllReviews();
+      // Fetch book details for each review
+      const reviewsWithDetails = await Promise.all(
+        reviews.map(async (review) => {
+          try {
+            const bookResponse = await api.get(`/books/${review.bookId}`);
+            return {
+              ...review,
+              bookTitle: bookResponse.data.title,
+              authorName: bookResponse.data.author,
+              isMyReview: review.userId === user?.id
+            };
+          } catch (error) {
+            console.error(`Error fetching book details for review ${review.id}:`, error);
+            return {
+              ...review,
+              bookTitle: 'Unknown Book',
+              authorName: 'Unknown Author',
+              isMyReview: review.userId === user?.id
+            };
+          }
+        })
+      );
+      return reviewsWithDetails;
+    },
+    enabled: !!user
+  });
+
+  // Filter reviews for the current user
+  const myReviews = allReviews.filter(review => review.userId === user?.id);
+
+  // Add review mutation
+  const addReviewMutation = useMutation({
+    mutationFn: async (review: Omit<Review, 'id'>) => {
+      const newReview = await reviewsService.createReview(review);
+      // Fetch book details for the new review
+      const bookResponse = await api.get(`/books/${review.bookId}`);
+      return {
+        ...newReview,
+        bookTitle: bookResponse.data.title,
+        authorName: bookResponse.data.author,
+        isMyReview: true
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+    }
+  });
+
+  // Update review mutation
+  const updateReviewMutation = useMutation({
+    mutationFn: async ({ id, review }: { id: string; review: Partial<Review> }) => {
+      const updatedReview = await reviewsService.updateReview(id, review);
+      // Fetch book details for the updated review
+      const bookResponse = await api.get(`/books/${updatedReview.bookId}`);
+      return {
+        ...updatedReview,
+        bookTitle: bookResponse.data.title,
+        authorName: bookResponse.data.author,
+        isMyReview: true
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+    }
+  });
+
+  // Delete review mutation
+  const deleteReviewMutation = useMutation({
+    mutationFn: (id: string) => reviewsService.deleteReview(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+    }
+  });
+
+  // Add comment mutation
+  const addCommentMutation = useMutation({
+    mutationFn: async ({ reviewId, comment }: { reviewId: string; comment: NewComment }) => {
+      const updatedReview = await reviewsService.addComment(reviewId, comment);
+      // Fetch book details for the updated review
+      const bookResponse = await api.get(`/books/${updatedReview.bookId}`);
+      return {
+        ...updatedReview,
+        bookTitle: bookResponse.data.title,
+        authorName: bookResponse.data.author,
+        isMyReview: updatedReview.userId === user?.id
+      };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+    }
+  });
+
+  return {
+    myReviews,
+    popularReviews: allReviews, // All reviews are shown in popular reviews
+    isLoading: isLoadingReviews,
+    error: reviewsError,
+    addReview: addReviewMutation.mutate,
+    updateReview: updateReviewMutation.mutate,
+    deleteReview: deleteReviewMutation.mutate,
+    addComment: addCommentMutation.mutate,
+    isAdding: addReviewMutation.isPending,
+    isUpdating: updateReviewMutation.isPending,
+    isDeleting: deleteReviewMutation.isPending,
+    isAddingComment: addCommentMutation.isPending
+  };
+};

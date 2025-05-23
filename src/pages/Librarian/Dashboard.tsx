@@ -3,7 +3,6 @@ import TodaysActivity from "@/components/dashboard/TodaysActivity";
 import BookInventory from "@/components/dashboard/BookInventory";
 import QrScanButton from "@/components/dashboard/QrScanButton";
 import ServiceStatus from "@/components/dashboard/ServiceStatus";
-import BranchTable from "@/components/dashboard/BranchTable";
 import StatsCard from "@/components/dashboard/StatsCard";
 import { Book, Users, Clock, AlertCircle, Library } from "lucide-react";
 import { useStats } from "@/hooks/useStats";
@@ -19,66 +18,60 @@ const LibrarianDashboard = () => {
     queryFn: loanService.getActiveLoans,
     refetchInterval: 5000 // Refetch every 5 seconds
   });
-  
-  const renderContent = () => {
-    if (statsLoading || activeLoansLoading) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        </div>
-      );
-    }
 
-    if (!stats) {
+  const renderContent = () => {
+    if (statsLoading) {
       return (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-gray-500">Failed to load dashboard data</p>
+        <div className="animate-pulse space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-2">
+                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                  <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="h-[300px] bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
         </div>
       );
     }
 
     return (
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Librarian Dashboard</h1>
-          <QrScanButton />
-        </div>
-        
-        {/* Stats Cards Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatsCard 
-            title="Total Books" 
-            value={stats.totalBooks.value} 
+      <div className="space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatsCard
+            title="Total Books"
+            value={stats?.totalBooks || 0}
             icon={Book}
-            trend={stats.totalBooks.trend}
+            isLoading={statsLoading}
           />
-          <StatsCard 
-            title="Active Members" 
-            value={stats.activeMembers.value} 
+          <StatsCard
+            title="Active Members"
+            value={stats?.activeMembers || 0}
             icon={Users}
-            trend={stats.activeMembers.trend}
+            isLoading={statsLoading}
           />
-          <StatsCard 
-            title="Currently Borrowed" 
-            value={activeLoans.length} 
+          <StatsCard
+            title="Active Loans"
+            value={stats?.activeLoans || 0}
             icon={Library}
-            trend={{ value: 0, isPositive: true }}
+            isLoading={statsLoading}
           />
-          <StatsCard 
-            title="Overdue Loans" 
-            value={stats.overdueLoans.value} 
-            icon={Clock}
-            trend={stats.overdueLoans.trend}
-          />
-          <StatsCard 
-            title="Issues Today" 
-            value={stats.issuesReported.value} 
+          <StatsCard
+            title="Overdue Books"
+            value={stats?.overdueBooks || 0}
             icon={AlertCircle}
-            trend={stats.issuesReported.trend}
+            isLoading={statsLoading}
+            className="border-amber-100 dark:border-amber-900"
           />
         </div>
-        
-        {/* Two-column layout for smaller screens, 3-column for larger */}
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Column 1: Today's Activity */}
           <div className="lg:col-span-1">
@@ -94,11 +87,6 @@ const LibrarianDashboard = () => {
           <div className="lg:col-span-1">
             <ServiceStatus />
           </div>
-        </div>
-        
-        {/* Branch Table - Full Width */}
-        <div className="col-span-full">
-          <BranchTable />
         </div>
       </div>
     );
